@@ -1,0 +1,25 @@
+
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "测试链路:F4硬件，加载F4的elf",
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "executable": "${workspaceFolder}/build/zhenjing.elf", // 依旧用F4编译出来的elf符号
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32f4x.cfg"   // ✅ cfg必须匹配真实硬件G431，保证OpenOCD不崩溃
+            ],
+            "openOCDLaunchCommands": [
+                "reset_config none separate",
+                "init",
+                "reset halt"
+            ],
+            "svdFile": "${workspaceFolder}/STM32F407.svd", // SVD匹配真实硬件
+            "runToEntryPoint": "main",
+            "showDevDebugOutput": "raw"
+        }
+    ]
+}
