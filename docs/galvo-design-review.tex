@@ -1,0 +1,379 @@
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,calc}
+\usepackage{caption}
+\captionsetup{font=small}
+\setlength{\parskip}{3pt}
+
+\title{振镜控制卡设计说明（评审稿）\\[2pt]
+\large 目标点缓冲、S 曲线规划与激光时序}
+\author{嵌入式软件组}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+本板接收上位机下发的目标点序列，驱动 XY 振镜平滑走位，并按目标点携带的
+标志控制激光开关。本文按“要解决什么问题—怎么做—为什么这样做”的顺序，
+说明从接收目标点到振镜引脚输出的完整数据流、关键设计取舍与实测结果，
+供设计评审使用。
+\end{abstract}
+
+\section{背景与目标}
+
+上位机把一条作业路径拆成许多离散目标点，每个点包含 X、Y 坐标和激光开关，
+通过通信接口成批下发（当前调试阶段为 UART，正式版为 SPI，协议不变）。
+板卡需要完成三件事：
+
+\begin{enumerate}
+  \item 把点缓存起来，允许上位机一次发很多点而不丢；
+  \item 在两个目标点之间走出平滑轨迹，而不是瞬间跳到新位置；
+  \item 按点上的标志控制激光，做到“移动到切割点时出光，结束后关光”。
+\end{enumerate}
+
+不能收到一个点就直接跳到新位置，是因为振镜电机和反射镜有惯量：
+位置阶跃会激起振荡和超调，轨迹会抖，切割边缘也会毛糙。因此每两个目标点
+之间插入若干中间点，让速度从零平滑加速、再平滑减速到零。
+
+设计受以下约束限制：
+
+\begin{itemize}
+  \item XY2-100 输出波形任何时刻都不能中断（振镜靠它持续刷新位置）；
+  \item 引脚数据每 500~ns 更新一次，且须在采样沿前稳定至少 50~ns；
+  \item 每个 500~ns 节拍都必须被 DMA 响应，不能停流或重配；
+  \item 帧内容更新须在 10~$\mu$s 帧周期内完成；单段动作约 800~$\mu$s。
+\end{itemize}
+
+\subsection*{术语}
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+术语 & 含义 \\
+\midrule
+XY2-100 & 振镜常用的同步串行位置接口：20 个时钟位一帧，含控制字、
+           16 位位置和奇偶校验。 \\
+BSRR & STM32 的 GPIO 置位/复位寄存器，写一次即可同时改变多条引脚电平。 \\
+DMA & 直接内存访问：外设与内存之间自动搬数据，不需要 CPU 逐字节操作。 \\
+DWT & 内核自带的周期计数器，用来测量微秒级时间。 \\
+乒乓缓冲 & 把 DMA 缓冲区分成 A/B 两半，发 A 时改 B、发 B 时改 A，轮流使用。 \\
+S 曲线 & 速度连续、首尾加速度为零的平滑轨迹，本文用三次 smoothstep 实现。 \\
+稳定时间 & 到达目标点后等待振镜机械振动衰减的时间，当前为 200~$\mu$s。 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{系统总览}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  box/.style={draw,rounded corners=2pt,align=center,font=\scriptsize,
+              fill=blue!5,minimum height=9mm,inner sep=2pt},
+  arrow/.style={-{Latex[length=1.5mm]},semithick}
+]
+\node[box] (h) {上位机\\8\,B/点};
+\node[box,right=3mm of h] (u) {通信层\\帧解析};
+\node[box,right=3mm of u] (r) {环形缓冲\\8\,KB};
+\node[box,right=3mm of r] (p) {S 曲线\\规划};
+\node[box,right=3mm of p] (e) {XY2-100\\编码};
+\node[box,right=3mm of e] (d) {DMA\\循环};
+\node[box,right=3mm of d] (g) {GPIOB\\BSRR};
+\node[box,right=3mm of g] (s) {振镜};
+\node[box,below=7mm of p,fill=orange!10] (l) {Laser 模块};
+\foreach \a/\b in {h/u,u/r,r/p,p/e,e/d,d/g,g/s}
+  \draw[arrow] (\a) -- (\b);
+\draw[arrow,dashed] (p) -- (l);
+\end{tikzpicture}
+\caption{数据处理链路。接收中断只负责收帧入环，主循环完成规划与编码，
+DMA 中断只在帧边界搬运数据。}
+\end{figure}
+
+一次典型动作按下面的顺序发生（假设上位机先发“靠近点”，再发“切割点”）：
+
+\begin{enumerate}
+  \item 通信接口每收齐一帧（8 字节），校验通过后把一条 6 字节记录
+        （X、Y、激光）放进环形缓冲区；接收中断随即返回，不参与后续计算。
+  \item 主循环发现缓冲区非空、且上一段已过稳定时间，取出一个目标点，
+        按标志设置激光，然后开始一段新轨迹。
+  \item 轨迹共 7 个点：第 1 点在段起点立刻输出，之后每 100~$\mu$s 输出一个，
+        第 7 点（目标点）在 600~$\mu$s 时输出。
+  \item 到达目标后不立即关闭激光，保持 200~$\mu$s 让机械振动衰减；
+        稳定结束后关光，本段结束。
+  \item 重复第 2 步，直到缓冲区为空。若没有新目标，振镜停在原地、激光关闭。
+\end{enumerate}
+
+主循环只做规划与编码，DMA 中断只做半区拷贝，二者都不阻塞对方。
+下面分别说明每个环节的设计。
+
+\section{设计说明}
+
+\subsection{通信协议}
+
+选择定长 8 字节帧而不是变长协议，是为了让接收中断里的解析逻辑尽可能简单：
+比较帧头、收满 8 字节、异或校验，通过即写入缓冲区。协议与传输介质无关，
+通信层只向上提供“取出一个目标点”的接口，换成 SPI 时上层代码不变。
+
+\begin{table}[htbp]
+\centering
+\caption{上行帧格式}
+\begin{tabular}{@{}cccc@{}}
+\toprule
+字节 & 名称 & 说明 & 取值 \\
+\midrule
+0--1 & 帧头 & 固定 & \texttt{AA 55} \\
+2--3 & X & 有符号坐标，小端 & $-32768\sim32767$ \\
+4--5 & Y & 有符号坐标，小端 & $-32768\sim32767$ \\
+6    & LASER & 该目标点是否出光 & 0/1 \\
+7    & XOR & 字节 0--6 的异或 & 0--255 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+例如 \texttt{AA 55 E8 03 18 FC 01 F1} 表示目标 $(1000,-1000)$、激光开。
+校验失败只累加错误计数，不打断后续接收。
+
+\subsection{目标点缓冲}
+
+\textbf{为什么需要缓冲。} 上位机通常一次下发整条路径，点到达的瞬时速率
+可能高于 1250 点/s 的执行速率；即使平均速率相同，主机调度抖动也会造成突发。
+若只保留一个最新点，未处理的点会被覆盖。环形缓冲区把速率差和突发吸收掉。
+
+\textbf{怎么做。} 缓冲区容量 8192 字节，每条记录 6 字节，可存 1365 个点，
+约合 1.1~s 的轨迹。结构使用柔性数组成员，初始化时一次性
+\texttt{malloc} 出“头部 + 数据区”，之后不再分配。
+
+\textbf{为什么不需要加锁。} 它只有一个生产者（通信接收中断）和一个消费者
+（主循环）。生产者只修改写索引 \texttt{head}，消费者只修改读索引
+\texttt{tail}，两侧在发布索引前执行 \texttt{\_\_DMB()}，保证数据先写入、
+索引后更新。全程不关中断，也不影响接收实时性。
+
+\textbf{读写语义。} 一次写入或读取要么整条成功，要么失败返回 0，
+不会产生“半条记录”。当前不做流控；8~KB 远大于实测积压峰值（约 27 点），
+正常使用不会写满。
+
+\subsection{S 曲线轨迹}
+
+\textbf{目标。} 让振镜从当前点平滑移动到目标点：起点和终点的速度为零，
+中间没有加速度突变，避免机械冲击。
+
+\textbf{方法。} 每段取 $N=7$ 个规划点（含终点）。第 $k$ 个点的归一化位置为
+\begin{equation}
+  s(u)=3u^2-2u^3,\qquad u=\frac{k}{N},\qquad k=1,\dots,N,
+\end{equation}
+X、Y 分别按同一比例插值：
+\begin{equation}
+  x_k=x_0+(x_t-x_0)\,s(k/N),\qquad
+  y_k=y_0+(y_t-y_0)\,s(k/N).
+\end{equation}
+由于两轴共用同一个 $s$，合成轨迹是从起点到终点的直线，只是速度按 S 形变化，
+不会走弧线。
+
+\textbf{为什么是 7 个点、100~$\mu$s。} 点数越多轨迹越平滑，但每段耗时也越长。
+取 7 点、100~$\mu$s 时，一段为 $6\times100=600$~$\mu$s，
+加上 200~$\mu$s 稳定，共 800~$\mu$s，吞吐约 1250 点/s，
+满足当前工艺要求。点数与间隔都集中在 \texttt{scurve.h} 的宏里，
+改一处即可调整。
+
+\begin{table}[htbp]
+\centering
+\caption{单段轨迹的时间预算}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+阶段 & 时间 & 说明 \\
+\midrule
+第 1 点 & 0 & 段起点，立即输出 \\
+第 2--7 点 & 每隔 100~$\mu$s & 第 7 点即目标点，位于 600~$\mu$s \\
+稳定 & 600--800~$\mu$s & 激光保持，机械振动衰减 \\
+下一段 & 800~$\mu$s 之后 & 才允许取下一个目标点 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{激光时序}
+
+激光标志属于“走向该目标点”的这一段，规则有两条：
+
+\begin{enumerate}
+  \item \textbf{段起点开光。} 稳定时间结束后取出目标点，若其激光位为 1，
+        立即开光，随后输出这段轨迹。
+  \item \textbf{稳定结束关光。} 到达目标点时激光保持当前状态，等 200~$\mu$s
+        稳定时间结束再关闭；若后面没有新目标，激光保持关闭。
+\end{enumerate}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,font=\scriptsize]
+  \draw[-{Latex[length=1.5mm]}] (-0.3,0)--(9,0) node[right]{$t$ ($\mu$s)};
+  \foreach \i in {0,...,8} \draw (\i,0.06)--(\i,-0.06);
+  \node[below] at (0,-0.1) {0};
+  \node[below] at (1,-0.1) {100};
+  \node[below] at (3,-0.1) {300};
+  \node[below] at (6,-0.1) {600};
+  \node[below] at (8,-0.1) {800};
+  \fill[gray!15] (6,0.2) rectangle (8,1.2);
+  \node[align=center] at (7,0.65) {稳定\\200};
+  \foreach \i in {0,...,6} \fill[blue] (\i,0.95) circle (1.6pt);
+  \node[above left] at (0,0.95) {P1};
+  \node[above right] at (6,0.95) {P7};
+  \node[above] at (3,1.3) {7 个规划点，间隔 100~$\mu$s};
+  \draw[red,thick] (0,-0.7)--(8,-0.7)--(8,-1.0)--(8.8,-1.0);
+  \node[left,red] at (0,-0.85) {激光};
+  \node[below] at (4,-1.0) {开（段起点）};
+  \node[below left] at (8.8,-1.0) {关（稳定结束）};
+\end{tikzpicture}
+\caption{单段时序。激光在段起点打开，走完 7 个点后保持出光通过稳定时间，
+稳定结束时关闭。}
+\end{figure}
+
+这样安排的含义是：终点位置在稳定过程中仍有出光，保证终点处的作业效果；
+稳定一结束立即关光，不会在等待下一个目标时空烧。稳定时间由
+\texttt{SCURVE\_SETTLE\_US} 决定，可按工艺调整。
+
+\subsection{输出波形如何保持连续}
+
+\textbf{XY2-100 的基本节奏。} 定时器 TIM1 产生 2~MHz 时钟，每 500~ns 一位。
+一帧 20 位，共 10~$\mu$s：前 3 位是控制字，中间 16 位是位置数据
+（偏移二进制，32768 表示零位），最后 1 位是偶校验。帧与帧首尾相接，
+振镜依赖这段连续时钟刷新位置，因此时钟和 DMA 一旦启动就不能停。
+
+每拍的数据更新也由硬件完成：TIM1 更新事件（CLK 上升沿）触发 DMA 写一个
+BSRR 字，X/Y/SYNC 随即改变电平；250~ns 后 CLK 下降沿，振镜采样。
+数据在采样前有 250~ns 的建立时间，高于协议要求的 50~ns。
+
+\textbf{软件更新与引脚更新分离。} 软件不参与逐拍输出，只负责准备下一帧：
+DMA 循环搬运 40 个字到 \texttt{GPIOB->BSRR}，这 40 个字正好是两帧
+（A、B 两个半区）。当 A 半区发送完毕，DMA 产生半传输中断，此时 B 半区
+正在发送，软件可以安全地改写 A；B 发完时同理改写 B。改写一帧只需要
+3.07~$\mu$s（实测），远小于 10~$\mu$s 的帧周期，因此下一帧总能及时就绪，
+不会出现“改到一半被 DMA 读走”或丢拍。
+
+\textbf{主循环与中断的配合。} 主循环把新坐标编码进 \texttt{stage[20]}，
+写完后先执行 \texttt{\_\_DMB()}，再自增代号；DMA 中断拷贝完某半区后
+更新该半区的代号。主循环只有在两个半区都跟上时才覆盖 \texttt{stage}，
+因此不需要关中断，也不需要停 DMA。
+
+\textbf{示波器实测。} 定时器输出的 2~MHz 时钟与 DMA 搬运后在引脚上
+呈现的波形之间约有 20~ns 的固定时间差。这是写 BSRR 到引脚翻转的
+传播延迟，远小于 500~ns 的位宽，不改变帧结构和振镜的采样时刻。
+
+\section{参数与资源}
+
+\begin{table}[htbp]
+\centering
+\caption{主要可调参数}
+\begin{tabular}{@{}llll@{}}
+\toprule
+参数 & 当前值 & 位置 & 作用 \\
+\midrule
+每段点数 & 7 & \texttt{lib/scurve/scurve.h} & 轨迹平滑度与段长 \\
+点间隔 & 100~$\mu$s & \texttt{lib/scurve/scurve.h} & 段内更新节奏 \\
+稳定时间 & 200~$\mu$s & \texttt{lib/scurve/scurve.h} & 到位等待、关光时刻 \\
+缓冲区大小 & 8192~B & 通信层配置 & 可缓存 1365 点 \\
+满量程角度 & 0.35~rad & \texttt{Galvo/galvo.h} & 坐标到命令字的比例，待标定 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+资源占用（Debug 构建）：Flash 约 78~KB，其中 64~KB 是 $128\times128$ 的
+畸变校正表占位（当前全 0）；静态 RAM 约 19.4~KB，其中约 1.5~KB 是临时测试日志；
+堆区预留 16~KB，环形缓冲区占 8~KB。
+
+\section{测试与验证}
+
+\subsection{测试条件}
+
+上位机脚本一次连续下发 200 个目标点：X 从 $-2000$ 起每两点增加 200，
+Y 在 $\pm400$ 之间交替；偶数点关光靠近，奇数点开光切割。
+固件用 DWT 记录前 16 段轨迹（记录满后停止），时间单位为 DWT 周期，
+168 周期 = 1~$\mu$s。
+
+\subsection{轨迹是否正确}
+
+以第一段（原点 $\to(-2000,-400)$）为例，实测点与理论 smoothstep 对比如下。
+$x_k/2000$ 与 $s(k/7)$ 的偏差不超过 1 个坐标单位，X、Y 始终保持 5:1，
+说明两轴同步且沿直线插值。
+
+\begin{table}[htbp]
+\centering
+\caption{第一段规划点实测值}
+\begin{tabular}{@{}cccccc@{}}
+\toprule
+$k$ & $s(k/7)$ 理论 & $x_k$ 实测 & $x_k/2000$ & $y_k$ 实测 & 与上点间隔/周期 \\
+\midrule
+1 & 0.0554 & $-111$  & 0.0555 & $-22$  & ---（段首） \\
+2 & 0.1983 & $-397$  & 0.1985 & $-79$  & 16800 \\
+3 & 0.3936 & $-787$  & 0.3935 & $-157$ & 16800 \\
+4 & 0.6064 & $-1213$ & 0.6065 & $-243$ & 16800 \\
+5 & 0.8017 & $-1603$ & 0.8015 & $-321$ & 16800 \\
+6 & 0.9446 & $-1889$ & 0.9445 & $-378$ & 16800 \\
+7 & 1.0000 & $-2000$ & 1.0000 & $-400$ & 16800 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{时间是否准确}
+
+\begin{table}[htbp]
+\centering
+\caption{实测时序（DWT 周期，168 周期 = 1~$\mu$s）}
+\begin{tabularx}{\textwidth}{@{}lccX@{}}
+\toprule
+项目 & 实测 & 设计值 & 说明 \\
+\midrule
+相邻规划点间隔 & 16800（100.0~$\mu$s） & 100~$\mu$s & 与设计一致 \\
+到位稳定时间 & 33600（200.0~$\mu$s） & 200~$\mu$s & 与设计一致 \\
+单段总时长 & 134600--134800（801--802~$\mu$s） & 800~$\mu$s & 含调度抖动 \\
+DMA 半区拷贝 & 515（3.07~$\mu$s） & $<10$~$\mu$s & 余量充足 \\
+数据建立时间 & 250~ns（配置） & $\ge$50~ns & 协议下限，余量充足 \\
+定时器与引脚波形时差 & 20~ns & --- & 输出级传播延迟 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{缓冲区行为是否符合预期}
+
+端到端延迟用一个点从进入缓冲区到写进 DMA 缓冲区的 DWT 差值衡量：
+
+\begin{itemize}
+  \item 上位机背靠背发送时，缓冲区积压约 27 个点，延迟约 21.9~ms；
+  \item 改成 1~ms 发一点（仍然快于 800~$\mu$s/点的消费速度）后，
+        积压消失，延迟降到约 632~$\mu$s。
+\end{itemize}
+
+这说明缓冲区确实在吸收突发流量，且积压会随发送节奏自然消失。
+段间第一个点的间隔出现 771--1221~$\mu$s 的波动，来自主机脚本的定时抖动
+（实际约 1.5~ms/点），固件在等待下一个目标点；段内 6 个间隔始终稳定在
+100~$\mu$s，不受主机节奏影响。
+
+\section{已知限制与后续工作}
+
+\begin{enumerate}
+  \item 畸变校正表当前全 0，输出为线性映射。需实测场镜后填入，并标定
+        零点角度。
+  \item 激光接口为空实现，待确认光闸/调制硬件后补齐。
+  \item 临时测试日志占用约 1.5~KB RAM，量产前删除。
+  \item 吞吐上限由 800~$\mu$s/点决定（约 1250 点/s）。若工艺要求更快，
+        需减小点数或点间隔，并确认上游接口带宽。
+  \item 上位机测试脚本的定时精度受操作系统调度影响，仅用于功能验证；
+        节拍要求严格时应由下位机提供主时钟。
+\end{enumerate}
+
+\section{结论}
+
+板卡在保证 XY2-100 波形连续的前提下，实现了目标点缓冲、S 曲线平滑走位
+和按点控制激光。实测轨迹、点间隔、稳定时间与 DMA 拷贝时间均与设计值一致：
+数据建立时间 250~ns（协议要求 $\ge$50~ns），帧内容更新 3.07~$\mu$s
+（帧周期 10~$\mu$s），单段动作约 800~$\mu$s，满足连续输出与吞吐约束，
+可进入振镜标定与激光联调阶段。
+
+\end{document}

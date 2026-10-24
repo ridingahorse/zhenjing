@@ -60,6 +60,7 @@ static int16_t galvo_cur_x = 0;            /* 当前输出的坐标 */
 static int16_t galvo_cur_y = 0;
 static uint32_t galvo_last_point_cycle = 0U;   /* 上一个规划点的输出时刻 */
 static uint32_t galvo_last_arrive_cycle = 0U;  /* 到达上一个目标点的时刻 */
+static uint8_t  galvo_laser_off_pending = 0U;  /* 已到位，待稳定结束后关光 */
 
 /* µs → DWT 周期（168 MHz 下 1 µs = 168 周期） */
 static uint32_t galvo_us_to_cycles(uint32_t us)
@@ -70,6 +71,25 @@ static uint32_t galvo_us_to_cycles(uint32_t us)
 /* ---- 调试计时 ---- */
 volatile uint32_t g_dma_copy_cycles = 0U;
 volatile uint32_t g_rx_to_dma_cycles = 0U;
+
+/* ===================== 临时测试：S 曲线日志（测完整块删除） =============== */
+#define GALVO_TEST_LOG   1
+#if GALVO_TEST_LOG
+#define GTEST_SEGS       16U
+
+volatile uint32_t gtest_t[GTEST_SEGS][SCURVE_POINTS];   /* 7 个点的输出时刻 */
+volatile int16_t  gtest_x[GTEST_SEGS][SCURVE_POINTS];
+volatile int16_t  gtest_y[GTEST_SEGS][SCURVE_POINTS];
+volatile uint32_t gtest_dt[GTEST_SEGS][SCURVE_POINTS];  /* 与上一个点的间隔 */
+volatile uint32_t gtest_settle[GTEST_SEGS];             /* 末点 → 稳定到期 */
+volatile uint32_t gtest_total[GTEST_SEGS];              /* 首点 → 稳定到期 */
+volatile uint8_t  gtest_seg = 0U;                       /* 已记录的段数 */
+
+static uint32_t   gtest_last_t = 0U;
+static uint8_t    gtest_pending_seg = 0U;               /* 等待记录稳定时间的段 */
+static volatile uint8_t gtest_settle_pending = 0U;
+#endif
+/* ===================== 临时测试结束 ====================================== */
 
 /* ---- 内部函数 ------------------------------------------------------------ */
 static float galvo_lut_sample(const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
@@ -82,6 +102,10 @@ static void galvo_encode(uint16_t cx, uint16_t cy, uint32_t *buf);
 static void galvo_dma_half_cb(DMA_HandleTypeDef *hdma);
 static void galvo_dma_cplt_cb(DMA_HandleTypeDef *hdma);
 static void galvo_dma_error_cb(DMA_HandleTypeDef *hdma);
+
+#if GALVO_TEST_LOG
+static void gtest_record(uint32_t now, uint32_t step, int16_t x, int16_t y);
+#endif
 
 /* ---- LUT ---------------------------------------------------------------- */
 
@@ -189,6 +213,35 @@ static void galvo_encode(uint16_t cx, uint16_t cy, uint32_t *buf)
   buf[19] = BSRR_LEVEL(M_SYNC, 0U) | BSRR_LEVEL(M_X, px) | BSRR_LEVEL(M_Y, py);
 }
 
+#if GALVO_TEST_LOG
+/* 记录一个规划点（只在主循环调用，写内存，不影响波形） */
+static void gtest_record(uint32_t now, uint32_t step, int16_t x, int16_t y)
+{
+  uint8_t s = gtest_seg;
+  uint32_t k;
+
+  if ((s >= GTEST_SEGS) || (step == 0U) || (step > SCURVE_POINTS))
+  {
+    return;
+  }
+
+  k = step - 1U;
+
+  gtest_t[s][k] = now;
+  gtest_x[s][k] = x;
+  gtest_y[s][k] = y;
+  gtest_dt[s][k] = (gtest_last_t == 0U) ? 0U : (now - gtest_last_t);
+  gtest_last_t = now;
+
+  if (k == (SCURVE_POINTS - 1U))
+  {
+    gtest_pending_seg = s;
+    gtest_settle_pending = 1U;
+    gtest_seg = (uint8_t)(s + 1U);      /* 等于 GTEST_SEGS 后停止记录 */
+  }
+}
+#endif
+
 /* ---- DMA 中断：帧边界搬运 ------------------------------------------------ */
 
 /* 上半区(A)刚发完，DMA 正在发 B，可以重填 A */
@@ -261,6 +314,7 @@ void Galvo_Init(void)
   galvo_cur_y = 0;
   galvo_last_point_cycle = 0U;
   galvo_last_arrive_cycle = 0U;
+  galvo_laser_off_pending = 0U;
 
   Laser_Off();                 /* 上电默认光闸关闭 */
 
@@ -307,6 +361,19 @@ void Galvo_Task(void)
 
   now = DWT->CYCCNT;
 
+#if GALVO_TEST_LOG
+  /* 稳定时间到期时记录一次（不依赖后面是否还有新点） */
+  if ((gtest_settle_pending != 0U) &&
+      ((now - galvo_last_arrive_cycle) >= galvo_us_to_cycles(SCURVE_SETTLE_US)))
+  {
+    uint8_t s = gtest_pending_seg;
+
+    gtest_settle[s] = now - galvo_last_arrive_cycle;
+    gtest_total[s] = (gtest_t[s][SCURVE_POINTS - 1U] - gtest_t[s][0]) + gtest_settle[s];
+    gtest_settle_pending = 0U;
+  }
+#endif
+
   /* 相邻规划点的最小间隔 */
   if ((now - galvo_last_point_cycle) < galvo_us_to_cycles(SCURVE_INTERVAL_US))
   {
@@ -323,19 +390,22 @@ void Galvo_Task(void)
       return;
     }
 
-    if (!Comm_PopPoint(&pt))
+    /* 稳定结束，上一段才算真正完成：此时关光 */
+    if (galvo_laser_off_pending != 0U)
     {
-      return;                  /* 队列为空，保持当前位置 */
+      Laser_Off();
+      galvo_laser_off_pending = 0U;
     }
 
-    /* 激光状态属于"移动到该目标点"这一段，在段起点切换 */
+    if (!Comm_PopPoint(&pt))
+    {
+      return;                  /* 队列为空，保持当前位置（激光已在上面关闭） */
+    }
+
+    /* 激光状态属于"移动到该目标点"这一段，在段起点开启 */
     if (pt.laser != 0U)
     {
       Laser_On();
-    }
-    else
-    {
-      Laser_Off();
     }
 
     SCurve_Start(&galvo_scurve, galvo_cur_x, galvo_cur_y, pt.x, pt.y);
@@ -359,10 +429,15 @@ void Galvo_Task(void)
   galvo_cur_y = y;
   galvo_last_point_cycle = now;
 
+#if GALVO_TEST_LOG
+  gtest_record(now, galvo_scurve.step, x, y);
+#endif
+
   if (SCurve_Done(&galvo_scurve))
   {
     galvo_plan_state = GALVO_IDLE;          /* 已到达目标点 */
     galvo_last_arrive_cycle = now;
+    galvo_laser_off_pending = 1U;           /* 稳定时间结束后再关光 */
   }
 
   __DMB();                     /* stage 写完，再发布代号 */
