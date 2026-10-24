@@ -1,4 +1,4 @@
-build/galvo.o: Galvo/galvo.c Galvo/galvo.h Galvo/galvo_lut.h Galvo/comm.h \
+build/galvo.o: Galvo/galvo.c Galvo/galvo.h Galvo/comm.h \
  lib/scurve/scurve.h Laser/laser.h Core/Inc/tim.h Core/Inc/main.h \
  Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h \
  Core/Inc/stm32f4xx_hal_conf.h \
@@ -27,7 +27,6 @@ build/galvo.o: Galvo/galvo.c Galvo/galvo.h Galvo/galvo_lut.h Galvo/comm.h \
  Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h Core/Inc/main.h
 Galvo/galvo.h:
-Galvo/galvo_lut.h:
 Galvo/comm.h:
 lib/scurve/scurve.h:
 Laser/laser.h:

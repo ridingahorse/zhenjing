@@ -4,7 +4,7 @@
   * @brief   XY2-100 输出：坐标 → 角度 → 命令字 → 20 拍 BSRR 编码 → 循环 DMA
   *
   * 分工：
-  *   - 主循环 Galvo_Task()：取点、查 LUT、换算、编码到 stage[]，发布代号；
+  *   - 主循环 Galvo_Task()：取点、换算、编码到 stage[]，发布代号；
   *   - DMA 中断：帧边界把 stage[] 拷到刚发完的那半区（A/B 乒乓）；
   *   - DMA 硬件：循环读取 40 个 word 写 GPIOB->BSRR，永不停止。
   * 因此波形连续性由硬件保证，软件只在帧边界改数据。
@@ -12,7 +12,6 @@
   */
 
 #include "galvo.h"
-#include "galvo_lut.h"
 #include "comm.h"
 #include "scurve.h"
 #include "laser.h"
@@ -92,11 +91,7 @@ static volatile uint8_t gtest_settle_pending = 0U;
 /* ===================== 临时测试结束 ====================================== */
 
 /* ---- 内部函数 ------------------------------------------------------------ */
-static float galvo_lut_sample(const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
-                              uint32_t ax, uint32_t ay);
-static uint16_t galvo_axis_cmd(int32_t d, uint32_t ax, uint32_t ay,
-                               const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
-                               float offset);
+static uint16_t galvo_axis_cmd(int32_t d, float offset);
 static void galvo_build_stage(int16_t x, int16_t y, uint32_t *buf);
 static void galvo_encode(uint16_t cx, uint16_t cy, uint32_t *buf);
 static void galvo_dma_half_cb(DMA_HandleTypeDef *hdma);
@@ -107,55 +102,17 @@ static void galvo_dma_error_cb(DMA_HandleTypeDef *hdma);
 static void gtest_record(uint32_t now, uint32_t step, int16_t x, int16_t y);
 #endif
 
-/* ---- LUT ---------------------------------------------------------------- */
+/* ---- 坐标换算 ------------------------------------------------------------ */
 
 /**
-  * @brief 双线性插值取样，ax/ay 为坐标绝对值（0..32768）
-  * @retval 校正量（弧度），未标定时为 0
-  */
-static float galvo_lut_sample(const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
-                              uint32_t ax, uint32_t ay)
-{
-  uint32_t ix, iy;
-  float fx, fy, v00, v10, v01, v11, top, bot;
-
-  if (ax > 32767U) { ax = 32767U; }
-  if (ay > 32767U) { ay = 32767U; }
-
-  ix = ax >> 8;
-  iy = ay >> 8;
-
-  /* 插值需要 i+1，索引限制在 0..126；末段的分数部分截到 1.0 */
-  if (ix > (GALVO_LUT_SIZE - 2U)) { ix = GALVO_LUT_SIZE - 2U; }
-  if (iy > (GALVO_LUT_SIZE - 2U)) { iy = GALVO_LUT_SIZE - 2U; }
-
-  fx = (float)(ax - (ix << 8)) * (1.0f / 256.0f);
-  fy = (float)(ay - (iy << 8)) * (1.0f / 256.0f);
-  if (fx > 1.0f) { fx = 1.0f; }
-  if (fy > 1.0f) { fy = 1.0f; }
-
-  v00 = (float)lut[iy][ix];
-  v10 = (float)lut[iy][ix + 1U];
-  v01 = (float)lut[iy + 1U][ix];
-  v11 = (float)lut[iy + 1U][ix + 1U];
-
-  top = v00 + (v10 - v00) * fx;
-  bot = v01 + (v11 - v01) * fx;
-  return (top + (bot - top) * fy) * GALVO_LUT_UNIT;
-}
-
-/**
-  * @brief 单轴：α = sgn(d) × (|d|/(2f) + LUT)，再换算成 16bit 命令字
+  * @brief 单轴：α = sgn(d) × |d|/(2f)，再换算成 16bit 命令字
   *
   * @param  d      有符号坐标
-  * @param  ax/ay  坐标绝对值，用于查表
   * @param  offset 该轴的零点角度 α0/β0
   */
-static uint16_t galvo_axis_cmd(int32_t d, uint32_t ax, uint32_t ay,
-                               const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
-                               float offset)
+static uint16_t galvo_axis_cmd(int32_t d, float offset)
 {
-  float ang = (float)ax / (2.0f * GALVO_F) + galvo_lut_sample(lut, ax, ay);
+  float ang = (float)(d < 0 ? -d : d) / (2.0f * GALVO_F);
   int32_t cmd;
 
   if (d < 0) { ang = -ang; }
@@ -173,11 +130,8 @@ static uint16_t galvo_axis_cmd(int32_t d, uint32_t ax, uint32_t ay,
   */
 static void galvo_build_stage(int16_t x, int16_t y, uint32_t *buf)
 {
-  uint32_t ax = (uint32_t)(x < 0 ? -(int32_t)x : (int32_t)x);
-  uint32_t ay = (uint32_t)(y < 0 ? -(int32_t)y : (int32_t)y);
-
-  uint16_t cx = galvo_axis_cmd(x, ax, ay, galvo_lut_alpha, GALVO_ALPHA0);
-  uint16_t cy = galvo_axis_cmd(y, ax, ay, galvo_lut_beta,  GALVO_BETA0);
+  uint16_t cx = galvo_axis_cmd(x, GALVO_ALPHA0);
+  uint16_t cy = galvo_axis_cmd(y, GALVO_BETA0);
 
   galvo_encode(cx, cy, buf);
 }
