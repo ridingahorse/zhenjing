@@ -1,0 +1,116 @@
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccAQ588c.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 2
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"laser.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.file 1 "Laser/laser.c"
+  20              		.section	.text.Laser_Init,"ax",%progbits
+  21              		.align	1
+  22              		.p2align 2,,3
+  23              		.global	Laser_Init
+  24              		.syntax unified
+  25              		.thumb
+  26              		.thumb_func
+  28              	Laser_Init:
+  29              	.LFB0:
+   1:Laser/laser.c **** /**
+   2:Laser/laser.c ****   ******************************************************************************
+   3:Laser/laser.c ****   * @file    laser.c
+   4:Laser/laser.c ****   * @brief   激光控制（内部暂不实现）
+   5:Laser/laser.c ****   *
+   6:Laser/laser.c ****   * TODO: 确定激光控制引脚 / 驱动方式后在此实现。
+   7:Laser/laser.c ****   *       三个接口的调用时机由振镜规划层控制：
+   8:Laser/laser.c ****   *       到达目标点并稳定后，按下一个目标点的激光标志切换。
+   9:Laser/laser.c ****   ******************************************************************************
+  10:Laser/laser.c ****   */
+  11:Laser/laser.c **** 
+  12:Laser/laser.c **** #include "laser.h"
+  13:Laser/laser.c **** 
+  14:Laser/laser.c **** void Laser_Init(void)
+  15:Laser/laser.c **** {
+  30              		.loc 1 15 1 view -0
+  31              		.cfi_startproc
+  32              		@ args = 0, pretend = 0, frame = 0
+  33              		@ frame_needed = 0, uses_anonymous_args = 0
+  34              		@ link register save eliminated.
+  16:Laser/laser.c ****   /* TODO: 配置控制引脚，上电默认关闭 */
+  17:Laser/laser.c **** }
+  35              		.loc 1 17 1 view .LVU1
+  36 0000 7047     		bx	lr
+  37              		.cfi_endproc
+  38              	.LFE0:
+  40 0002 00BF     		.section	.text.Laser_On,"ax",%progbits
+  41              		.align	1
+  42              		.p2align 2,,3
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccAQ588c.s 			page 2
+
+
+  43              		.global	Laser_On
+  44              		.syntax unified
+  45              		.thumb
+  46              		.thumb_func
+  48              	Laser_On:
+  49              	.LFB4:
+  50              		.cfi_startproc
+  18:Laser/laser.c **** 
+  19:Laser/laser.c **** void Laser_On(void)
+  51              		.loc 1 19 6 view -0
+  52              		@ args = 0, pretend = 0, frame = 0
+  53              		@ frame_needed = 0, uses_anonymous_args = 0
+  54              		@ link register save eliminated.
+  55 0000 7047     		bx	lr
+  56              		.cfi_endproc
+  57              	.LFE4:
+  59 0002 00BF     		.section	.text.Laser_Off,"ax",%progbits
+  60              		.align	1
+  61              		.p2align 2,,3
+  62              		.global	Laser_Off
+  63              		.syntax unified
+  64              		.thumb
+  65              		.thumb_func
+  67              	Laser_Off:
+  68              	.LFB6:
+  69              		.cfi_startproc
+  20:Laser/laser.c **** {
+  21:Laser/laser.c ****   /* TODO: 拉高/使能激光 */
+  22:Laser/laser.c **** }
+  23:Laser/laser.c **** 
+  24:Laser/laser.c **** void Laser_Off(void)
+  70              		.loc 1 24 6 view -0
+  71              		@ args = 0, pretend = 0, frame = 0
+  72              		@ frame_needed = 0, uses_anonymous_args = 0
+  73              		@ link register save eliminated.
+  74 0000 7047     		bx	lr
+  75              		.cfi_endproc
+  76              	.LFE6:
+  78 0002 00BF     		.text
+  79              	.Letext0:
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccAQ588c.s 			page 3
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 laser.c
+C:\Users\Lenovo\AppData\Local\Temp\ccAQ588c.s:21     .text.Laser_Init:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\ccAQ588c.s:28     .text.Laser_Init:00000000 Laser_Init
+C:\Users\Lenovo\AppData\Local\Temp\ccAQ588c.s:41     .text.Laser_On:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\ccAQ588c.s:48     .text.Laser_On:00000000 Laser_On
+C:\Users\Lenovo\AppData\Local\Temp\ccAQ588c.s:60     .text.Laser_Off:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\ccAQ588c.s:67     .text.Laser_Off:00000000 Laser_Off
+
+NO UNDEFINED SYMBOLS

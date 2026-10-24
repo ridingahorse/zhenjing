@@ -43,6 +43,9 @@ Core/Src/tim.c \
 Core/Src/usart.c \
 Galvo/comm_uart.c \
 Galvo/galvo.c \
+Laser/laser.c \
+lib/ringbuffer/ringbuffer.c \
+lib/scurve/scurve.c \
 Core/Src/stm32f4xx_it.c \
 Core/Src/stm32f4xx_hal_msp.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c \
@@ -126,6 +129,9 @@ AS_INCLUDES =
 C_INCLUDES =  \
 -ICore/Inc \
 -IGalvo \
+-ILaser \
+-Ilib/ringbuffer \
+-Ilib/scurve \
 -IDrivers/STM32F4xx_HAL_Driver/Inc \
 -IDrivers/STM32F4xx_HAL_Driver/Inc/Legacy \
 -IDrivers/CMSIS/Device/ST/STM32F4xx/Include \

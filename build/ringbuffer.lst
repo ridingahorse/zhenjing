@@ -1,0 +1,911 @@
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 2
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"ringbuffer.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.file 1 "lib/ringbuffer/ringbuffer.c"
+  20              		.section	.text.RingBuffer_Init,"ax",%progbits
+  21              		.align	1
+  22              		.p2align 2,,3
+  23              		.global	RingBuffer_Init
+  24              		.syntax unified
+  25              		.thumb
+  26              		.thumb_func
+  28              	RingBuffer_Init:
+  29              	.LVL0:
+  30              	.LFB134:
+   1:lib/ringbuffer/ringbuffer.c **** /**
+   2:lib/ringbuffer/ringbuffer.c ****   ******************************************************************************
+   3:lib/ringbuffer/ringbuffer.c ****   * @file    ringbuffer.c
+   4:lib/ringbuffer/ringbuffer.c ****   * @brief   柔性数组环形缓冲区实现
+   5:lib/ringbuffer/ringbuffer.c ****   ******************************************************************************
+   6:lib/ringbuffer/ringbuffer.c ****   */
+   7:lib/ringbuffer/ringbuffer.c **** 
+   8:lib/ringbuffer/ringbuffer.c **** #include "ringbuffer.h"
+   9:lib/ringbuffer/ringbuffer.c **** 
+  10:lib/ringbuffer/ringbuffer.c **** #include <stdlib.h>
+  11:lib/ringbuffer/ringbuffer.c **** #include <string.h>
+  12:lib/ringbuffer/ringbuffer.c **** 
+  13:lib/ringbuffer/ringbuffer.c **** #include "stm32f4xx.h"      /* __DMB() */
+  14:lib/ringbuffer/ringbuffer.c **** 
+  15:lib/ringbuffer/ringbuffer.c **** RingBuffer *RingBuffer_Init(uint32_t size)
+  16:lib/ringbuffer/ringbuffer.c **** {
+  31              		.loc 1 16 1 view -0
+  32              		.cfi_startproc
+  33              		@ args = 0, pretend = 0, frame = 0
+  34              		@ frame_needed = 0, uses_anonymous_args = 0
+  17:lib/ringbuffer/ringbuffer.c ****   RingBuffer *rb;
+  35              		.loc 1 17 3 view .LVU1
+  18:lib/ringbuffer/ringbuffer.c **** 
+  19:lib/ringbuffer/ringbuffer.c ****   /* 必须是非 0 的 2 的幂 */
+  20:lib/ringbuffer/ringbuffer.c ****   if ((size == 0U) || ((size & (size - 1U)) != 0U))
+  36              		.loc 1 20 3 view .LVU2
+  16:lib/ringbuffer/ringbuffer.c ****   RingBuffer *rb;
+  37              		.loc 1 16 1 is_stmt 0 view .LVU3
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s 			page 2
+
+
+  38 0000 38B5     		push	{r3, r4, r5, lr}
+  39              	.LCFI0:
+  40              		.cfi_def_cfa_offset 16
+  41              		.cfi_offset 3, -16
+  42              		.cfi_offset 4, -12
+  43              		.cfi_offset 5, -8
+  44              		.cfi_offset 14, -4
+  45              		.loc 1 20 6 view .LVU4
+  46 0002 0446     		mov	r4, r0
+  47 0004 58B1     		cbz	r0, .L6
+  48              		.loc 1 20 38 discriminator 1 view .LVU5
+  49 0006 431E     		subs	r3, r0, #1
+  50              		.loc 1 20 20 discriminator 1 view .LVU6
+  51 0008 13EA0005 		ands	r5, r3, r0
+  52 000c 07D1     		bne	.L6
+  21:lib/ringbuffer/ringbuffer.c ****   {
+  22:lib/ringbuffer/ringbuffer.c ****     return NULL;
+  23:lib/ringbuffer/ringbuffer.c ****   }
+  24:lib/ringbuffer/ringbuffer.c **** 
+  25:lib/ringbuffer/ringbuffer.c ****   /* 柔性数组: 头结构 + 数据区一次分配 */
+  26:lib/ringbuffer/ringbuffer.c ****   rb = (RingBuffer *)malloc(sizeof(RingBuffer) + size);
+  53              		.loc 1 26 3 is_stmt 1 view .LVU7
+  54              		.loc 1 26 22 is_stmt 0 view .LVU8
+  55 000e 0C30     		adds	r0, r0, #12
+  56              	.LVL1:
+  57              		.loc 1 26 22 view .LVU9
+  58 0010 FFF7FEFF 		bl	malloc
+  59              	.LVL2:
+  27:lib/ringbuffer/ringbuffer.c ****   if (rb == NULL)
+  60              		.loc 1 27 3 is_stmt 1 view .LVU10
+  61              		.loc 1 27 6 is_stmt 0 view .LVU11
+  62 0014 10B1     		cbz	r0, .L1
+  28:lib/ringbuffer/ringbuffer.c ****   {
+  29:lib/ringbuffer/ringbuffer.c ****     return NULL;
+  30:lib/ringbuffer/ringbuffer.c ****   }
+  31:lib/ringbuffer/ringbuffer.c **** 
+  32:lib/ringbuffer/ringbuffer.c ****   rb->size = size;
+  63              		.loc 1 32 3 is_stmt 1 view .LVU12
+  33:lib/ringbuffer/ringbuffer.c ****   rb->head = 0U;
+  64              		.loc 1 33 12 is_stmt 0 view .LVU13
+  65 0016 4560     		str	r5, [r0, #4]
+  32:lib/ringbuffer/ringbuffer.c ****   rb->head = 0U;
+  66              		.loc 1 32 12 view .LVU14
+  67 0018 0460     		str	r4, [r0]
+  68              		.loc 1 33 3 is_stmt 1 view .LVU15
+  34:lib/ringbuffer/ringbuffer.c ****   rb->tail = 0U;
+  69              		.loc 1 34 3 view .LVU16
+  70              		.loc 1 34 12 is_stmt 0 view .LVU17
+  71 001a 8560     		str	r5, [r0, #8]
+  35:lib/ringbuffer/ringbuffer.c ****   return rb;
+  72              		.loc 1 35 3 is_stmt 1 view .LVU18
+  73              	.L1:
+  36:lib/ringbuffer/ringbuffer.c **** }
+  74              		.loc 1 36 1 is_stmt 0 view .LVU19
+  75 001c 38BD     		pop	{r3, r4, r5, pc}
+  76              	.LVL3:
+  77              	.L6:
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s 			page 3
+
+
+  22:lib/ringbuffer/ringbuffer.c ****   }
+  78              		.loc 1 22 12 view .LVU20
+  79 001e 0020     		movs	r0, #0
+  80              	.LVL4:
+  81              		.loc 1 36 1 view .LVU21
+  82 0020 38BD     		pop	{r3, r4, r5, pc}
+  83              		.loc 1 36 1 view .LVU22
+  84              		.cfi_endproc
+  85              	.LFE134:
+  87 0022 00BF     		.section	.text.RingBuffer_Deinit,"ax",%progbits
+  88              		.align	1
+  89              		.p2align 2,,3
+  90              		.global	RingBuffer_Deinit
+  91              		.syntax unified
+  92              		.thumb
+  93              		.thumb_func
+  95              	RingBuffer_Deinit:
+  96              	.LVL5:
+  97              	.LFB135:
+  37:lib/ringbuffer/ringbuffer.c **** 
+  38:lib/ringbuffer/ringbuffer.c **** void RingBuffer_Deinit(RingBuffer *rb)
+  39:lib/ringbuffer/ringbuffer.c **** {
+  98              		.loc 1 39 1 is_stmt 1 view -0
+  99              		.cfi_startproc
+ 100              		@ args = 0, pretend = 0, frame = 0
+ 101              		@ frame_needed = 0, uses_anonymous_args = 0
+ 102              		@ link register save eliminated.
+  40:lib/ringbuffer/ringbuffer.c ****   free(rb);
+ 103              		.loc 1 40 3 view .LVU24
+ 104 0000 FFF7FEBF 		b	free
+ 105              	.LVL6:
+ 106              		.loc 1 40 3 is_stmt 0 view .LVU25
+ 107              		.cfi_endproc
+ 108              	.LFE135:
+ 110              		.section	.text.RingBuffer_Write,"ax",%progbits
+ 111              		.align	1
+ 112              		.p2align 2,,3
+ 113              		.global	RingBuffer_Write
+ 114              		.syntax unified
+ 115              		.thumb
+ 116              		.thumb_func
+ 118              	RingBuffer_Write:
+ 119              	.LVL7:
+ 120              	.LFB136:
+  41:lib/ringbuffer/ringbuffer.c **** }
+  42:lib/ringbuffer/ringbuffer.c **** 
+  43:lib/ringbuffer/ringbuffer.c **** uint32_t RingBuffer_Write(RingBuffer *rb, const void *src, uint32_t len)
+  44:lib/ringbuffer/ringbuffer.c **** {
+ 121              		.loc 1 44 1 is_stmt 1 view -0
+ 122              		.cfi_startproc
+ 123              		@ args = 0, pretend = 0, frame = 0
+ 124              		@ frame_needed = 0, uses_anonymous_args = 0
+  45:lib/ringbuffer/ringbuffer.c ****   const uint8_t *p = (const uint8_t *)src;
+ 125              		.loc 1 45 3 view .LVU27
+  46:lib/ringbuffer/ringbuffer.c ****   uint32_t mask, used, space, first;
+ 126              		.loc 1 46 3 view .LVU28
+  47:lib/ringbuffer/ringbuffer.c **** 
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s 			page 4
+
+
+  48:lib/ringbuffer/ringbuffer.c ****   if ((rb == NULL) || (p == NULL) || (len == 0U))
+ 127              		.loc 1 48 3 view .LVU29
+  44:lib/ringbuffer/ringbuffer.c ****   const uint8_t *p = (const uint8_t *)src;
+ 128              		.loc 1 44 1 is_stmt 0 view .LVU30
+ 129 0000 2DE9F041 		push	{r4, r5, r6, r7, r8, lr}
+ 130              	.LCFI1:
+ 131              		.cfi_def_cfa_offset 24
+ 132              		.cfi_offset 4, -24
+ 133              		.cfi_offset 5, -20
+ 134              		.cfi_offset 6, -16
+ 135              		.cfi_offset 7, -12
+ 136              		.cfi_offset 8, -8
+ 137              		.cfi_offset 14, -4
+ 138              		.loc 1 48 6 view .LVU31
+ 139 0004 0446     		mov	r4, r0
+ 140 0006 38B3     		cbz	r0, .L16
+ 141 0008 0D46     		mov	r5, r1
+ 142              		.loc 1 48 20 discriminator 1 view .LVU32
+ 143 000a 29B3     		cbz	r1, .L16
+ 144 000c 1646     		mov	r6, r2
+ 145              		.loc 1 48 35 discriminator 2 view .LVU33
+ 146 000e 1AB3     		cbz	r2, .L16
+  49:lib/ringbuffer/ringbuffer.c ****   {
+  50:lib/ringbuffer/ringbuffer.c ****     return 0U;
+  51:lib/ringbuffer/ringbuffer.c ****   }
+  52:lib/ringbuffer/ringbuffer.c **** 
+  53:lib/ringbuffer/ringbuffer.c ****   mask = rb->size - 1U;
+ 147              		.loc 1 53 3 is_stmt 1 view .LVU34
+ 148              		.loc 1 53 12 is_stmt 0 view .LVU35
+ 149 0010 0768     		ldr	r7, [r0]
+ 150              	.LVL8:
+  54:lib/ringbuffer/ringbuffer.c ****   used = rb->head - rb->tail;
+ 151              		.loc 1 54 3 is_stmt 1 view .LVU36
+ 152              		.loc 1 54 12 is_stmt 0 view .LVU37
+ 153 0012 4068     		ldr	r0, [r0, #4]
+ 154              	.LVL9:
+ 155              		.loc 1 54 23 view .LVU38
+ 156 0014 A368     		ldr	r3, [r4, #8]
+ 157              	.LVL10:
+  55:lib/ringbuffer/ringbuffer.c ****   space = rb->size - used;
+ 158              		.loc 1 55 3 is_stmt 1 view .LVU39
+  56:lib/ringbuffer/ringbuffer.c **** 
+  57:lib/ringbuffer/ringbuffer.c ****   /* 整体写: 空间不够就一个字节都不写 */
+  58:lib/ringbuffer/ringbuffer.c ****   if (len > space)
+ 159              		.loc 1 58 3 view .LVU40
+  55:lib/ringbuffer/ringbuffer.c ****   space = rb->size - used;
+ 160              		.loc 1 55 9 is_stmt 0 view .LVU41
+ 161 0016 3B44     		add	r3, r3, r7
+ 162              	.LVL11:
+  55:lib/ringbuffer/ringbuffer.c ****   space = rb->size - used;
+ 163              		.loc 1 55 9 view .LVU42
+ 164 0018 1B1A     		subs	r3, r3, r0
+ 165              	.LVL12:
+ 166              		.loc 1 58 6 view .LVU43
+ 167 001a 9A42     		cmp	r2, r3
+ 168 001c 1CD8     		bhi	.L16
+  59:lib/ringbuffer/ringbuffer.c ****   {
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s 			page 5
+
+
+  60:lib/ringbuffer/ringbuffer.c ****     return 0U;
+  61:lib/ringbuffer/ringbuffer.c ****   }
+  62:lib/ringbuffer/ringbuffer.c **** 
+  63:lib/ringbuffer/ringbuffer.c ****   first = rb->size - (rb->head & mask);
+ 169              		.loc 1 63 25 view .LVU44
+ 170 001e 6368     		ldr	r3, [r4, #4]
+ 171              	.LVL13:
+  64:lib/ringbuffer/ringbuffer.c ****   if (first > len)
+  65:lib/ringbuffer/ringbuffer.c ****   {
+  66:lib/ringbuffer/ringbuffer.c ****     first = len;
+  67:lib/ringbuffer/ringbuffer.c ****   }
+  68:lib/ringbuffer/ringbuffer.c **** 
+  69:lib/ringbuffer/ringbuffer.c ****   memcpy(&rb->data[rb->head & mask], p, first);
+ 172              		.loc 1 69 22 view .LVU45
+ 173 0020 6068     		ldr	r0, [r4, #4]
+  53:lib/ringbuffer/ringbuffer.c ****   used = rb->head - rb->tail;
+ 174              		.loc 1 53 8 view .LVU46
+ 175 0022 07F1FF3C 		add	ip, r7, #-1
+ 176              	.LVL14:
+  63:lib/ringbuffer/ringbuffer.c ****   if (first > len)
+ 177              		.loc 1 63 3 is_stmt 1 view .LVU47
+  63:lib/ringbuffer/ringbuffer.c ****   if (first > len)
+ 178              		.loc 1 63 32 is_stmt 0 view .LVU48
+ 179 0026 03EA0C03 		and	r3, r3, ip
+  63:lib/ringbuffer/ringbuffer.c ****   if (first > len)
+ 180              		.loc 1 63 9 view .LVU49
+ 181 002a FF1A     		subs	r7, r7, r3
+ 182              	.LVL15:
+  64:lib/ringbuffer/ringbuffer.c ****   if (first > len)
+ 183              		.loc 1 64 3 is_stmt 1 view .LVU50
+  64:lib/ringbuffer/ringbuffer.c ****   if (first > len)
+ 184              		.loc 1 64 6 is_stmt 0 view .LVU51
+ 185 002c BA42     		cmp	r2, r7
+ 186              		.loc 1 69 29 view .LVU52
+ 187 002e 00EA0C00 		and	r0, r0, ip
+  64:lib/ringbuffer/ringbuffer.c ****   if (first > len)
+ 188              		.loc 1 64 6 view .LVU53
+ 189 0032 9046     		mov	r8, r2
+ 190              		.loc 1 69 10 view .LVU54
+ 191 0034 00F10C00 		add	r0, r0, #12
+  64:lib/ringbuffer/ringbuffer.c ****   if (first > len)
+ 192              		.loc 1 64 6 view .LVU55
+ 193 0038 28BF     		it	cs
+ 194 003a B846     		movcs	r8, r7
+ 195              	.LVL16:
+ 196              		.loc 1 69 3 is_stmt 1 view .LVU56
+ 197 003c 2044     		add	r0, r0, r4
+ 198 003e 4246     		mov	r2, r8
+ 199              	.LVL17:
+ 200              		.loc 1 69 3 is_stmt 0 view .LVU57
+ 201 0040 FFF7FEFF 		bl	memcpy
+ 202              	.LVL18:
+  70:lib/ringbuffer/ringbuffer.c ****   if (len > first)
+ 203              		.loc 1 70 3 is_stmt 1 view .LVU58
+ 204              		.loc 1 70 6 is_stmt 0 view .LVU59
+ 205 0044 BE42     		cmp	r6, r7
+ 206 0046 0AD8     		bhi	.L18
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s 			page 6
+
+
+ 207              	.L12:
+  71:lib/ringbuffer/ringbuffer.c ****   {
+  72:lib/ringbuffer/ringbuffer.c ****     memcpy(&rb->data[0], p + first, len - first);
+  73:lib/ringbuffer/ringbuffer.c ****   }
+  74:lib/ringbuffer/ringbuffer.c **** 
+  75:lib/ringbuffer/ringbuffer.c ****   __DMB();                    /* 数据先落地，再发布 head */
+ 208              		.loc 1 75 3 is_stmt 1 view .LVU60
+ 209              	.LBB6:
+ 210              	.LBI6:
+ 211              		.file 2 "Drivers/CMSIS/Include/cmsis_gcc.h"
+   1:Drivers/CMSIS/Include/cmsis_gcc.h **** /**************************************************************************//**
+   2:Drivers/CMSIS/Include/cmsis_gcc.h ****  * @file     cmsis_gcc.h
+   3:Drivers/CMSIS/Include/cmsis_gcc.h ****  * @brief    CMSIS compiler GCC header file
+   4:Drivers/CMSIS/Include/cmsis_gcc.h ****  * @version  V5.4.1
+   5:Drivers/CMSIS/Include/cmsis_gcc.h ****  * @date     27. May 2021
+   6:Drivers/CMSIS/Include/cmsis_gcc.h ****  ******************************************************************************/
+   7:Drivers/CMSIS/Include/cmsis_gcc.h **** /*
+   8:Drivers/CMSIS/Include/cmsis_gcc.h ****  * Copyright (c) 2009-2021 Arm Limited. All rights reserved.
+   9:Drivers/CMSIS/Include/cmsis_gcc.h ****  *
+  10:Drivers/CMSIS/Include/cmsis_gcc.h ****  * SPDX-License-Identifier: Apache-2.0
+  11:Drivers/CMSIS/Include/cmsis_gcc.h ****  *
+  12:Drivers/CMSIS/Include/cmsis_gcc.h ****  * Licensed under the Apache License, Version 2.0 (the License); you may
+  13:Drivers/CMSIS/Include/cmsis_gcc.h ****  * not use this file except in compliance with the License.
+  14:Drivers/CMSIS/Include/cmsis_gcc.h ****  * You may obtain a copy of the License at
+  15:Drivers/CMSIS/Include/cmsis_gcc.h ****  *
+  16:Drivers/CMSIS/Include/cmsis_gcc.h ****  * www.apache.org/licenses/LICENSE-2.0
+  17:Drivers/CMSIS/Include/cmsis_gcc.h ****  *
+  18:Drivers/CMSIS/Include/cmsis_gcc.h ****  * Unless required by applicable law or agreed to in writing, software
+  19:Drivers/CMSIS/Include/cmsis_gcc.h ****  * distributed under the License is distributed on an AS IS BASIS, WITHOUT
+  20:Drivers/CMSIS/Include/cmsis_gcc.h ****  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  21:Drivers/CMSIS/Include/cmsis_gcc.h ****  * See the License for the specific language governing permissions and
+  22:Drivers/CMSIS/Include/cmsis_gcc.h ****  * limitations under the License.
+  23:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+  24:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+  25:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __CMSIS_GCC_H
+  26:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __CMSIS_GCC_H
+  27:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+  28:Drivers/CMSIS/Include/cmsis_gcc.h **** /* ignore some GCC warnings */
+  29:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic push
+  30:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic ignored "-Wsign-conversion"
+  31:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic ignored "-Wconversion"
+  32:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic ignored "-Wunused-parameter"
+  33:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+  34:Drivers/CMSIS/Include/cmsis_gcc.h **** /* Fallback for __has_builtin */
+  35:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __has_builtin
+  36:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __has_builtin(x) (0)
+  37:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  38:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+  39:Drivers/CMSIS/Include/cmsis_gcc.h **** /* CMSIS compiler specific defines */
+  40:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __ASM
+  41:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __ASM                                  __asm
+  42:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  43:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __INLINE
+  44:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __INLINE                               inline
+  45:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  46:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __STATIC_INLINE
+  47:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __STATIC_INLINE                        static inline
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s 			page 7
+
+
+  48:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  49:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __STATIC_FORCEINLINE
+  50:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __STATIC_FORCEINLINE                   __attribute__((always_inline)) static inline
+  51:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  52:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __NO_RETURN
+  53:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __NO_RETURN                            __attribute__((__noreturn__))
+  54:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  55:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __USED
+  56:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __USED                                 __attribute__((used))
+  57:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  58:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __WEAK
+  59:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __WEAK                                 __attribute__((weak))
+  60:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  61:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __PACKED
+  62:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __PACKED                               __attribute__((packed, aligned(1)))
+  63:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  64:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __PACKED_STRUCT
+  65:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __PACKED_STRUCT                        struct __attribute__((packed, aligned(1)))
+  66:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  67:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __PACKED_UNION
+  68:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __PACKED_UNION                         union __attribute__((packed, aligned(1)))
+  69:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  70:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT32        /* deprecated */
+  71:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
+  72:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
+  73:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
+  74:Drivers/CMSIS/Include/cmsis_gcc.h ****   struct __attribute__((packed)) T_UINT32 { uint32_t v; };
+  75:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
+  76:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT32(x)                  (((struct T_UINT32 *)(x))->v)
+  77:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  78:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT16_WRITE
+  79:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
+  80:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
+  81:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
+  82:Drivers/CMSIS/Include/cmsis_gcc.h ****   __PACKED_STRUCT T_UINT16_WRITE { uint16_t v; };
+  83:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
+  84:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT16_WRITE(addr, val)    (void)((((struct T_UINT16_WRITE *)(void *)(addr))-
+  85:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  86:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT16_READ
+  87:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
+  88:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
+  89:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
+  90:Drivers/CMSIS/Include/cmsis_gcc.h ****   __PACKED_STRUCT T_UINT16_READ { uint16_t v; };
+  91:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
+  92:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT16_READ(addr)          (((const struct T_UINT16_READ *)(const void *)(add
+  93:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  94:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT32_WRITE
+  95:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
+  96:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
+  97:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
+  98:Drivers/CMSIS/Include/cmsis_gcc.h ****   __PACKED_STRUCT T_UINT32_WRITE { uint32_t v; };
+  99:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
+ 100:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT32_WRITE(addr, val)    (void)((((struct T_UINT32_WRITE *)(void *)(addr))-
+ 101:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 102:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT32_READ
+ 103:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
+ 104:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s 			page 8
+
+
+ 105:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
+ 106:Drivers/CMSIS/Include/cmsis_gcc.h ****   __PACKED_STRUCT T_UINT32_READ { uint32_t v; };
+ 107:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
+ 108:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT32_READ(addr)          (((const struct T_UINT32_READ *)(const void *)(add
+ 109:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 110:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __ALIGNED
+ 111:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __ALIGNED(x)                           __attribute__((aligned(x)))
+ 112:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 113:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __RESTRICT
+ 114:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __RESTRICT                             __restrict
+ 115:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 116:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __COMPILER_BARRIER
+ 117:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __COMPILER_BARRIER()                   __ASM volatile("":::"memory")
+ 118:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 119:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 120:Drivers/CMSIS/Include/cmsis_gcc.h **** /* #########################  Startup and Lowlevel Init  ######################## */
+ 121:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 122:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __PROGRAM_START
+ 123:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 124:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 125:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Initializes data and bss sections
+ 126:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details This default implementations initialized all data and additional bss
+ 127:Drivers/CMSIS/Include/cmsis_gcc.h ****            sections relying on .copy.table and .zero.table specified properly
+ 128:Drivers/CMSIS/Include/cmsis_gcc.h ****            in the used linker script.
+ 129:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 130:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 131:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE __NO_RETURN void __cmsis_start(void)
+ 132:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 133:Drivers/CMSIS/Include/cmsis_gcc.h ****   extern void _start(void) __NO_RETURN;
+ 134:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 135:Drivers/CMSIS/Include/cmsis_gcc.h ****   typedef struct {
+ 136:Drivers/CMSIS/Include/cmsis_gcc.h ****     uint32_t const* src;
+ 137:Drivers/CMSIS/Include/cmsis_gcc.h ****     uint32_t* dest;
+ 138:Drivers/CMSIS/Include/cmsis_gcc.h ****     uint32_t  wlen;
+ 139:Drivers/CMSIS/Include/cmsis_gcc.h ****   } __copy_table_t;
+ 140:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 141:Drivers/CMSIS/Include/cmsis_gcc.h ****   typedef struct {
+ 142:Drivers/CMSIS/Include/cmsis_gcc.h ****     uint32_t* dest;
+ 143:Drivers/CMSIS/Include/cmsis_gcc.h ****     uint32_t  wlen;
+ 144:Drivers/CMSIS/Include/cmsis_gcc.h ****   } __zero_table_t;
+ 145:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 146:Drivers/CMSIS/Include/cmsis_gcc.h ****   extern const __copy_table_t __copy_table_start__;
+ 147:Drivers/CMSIS/Include/cmsis_gcc.h ****   extern const __copy_table_t __copy_table_end__;
+ 148:Drivers/CMSIS/Include/cmsis_gcc.h ****   extern const __zero_table_t __zero_table_start__;
+ 149:Drivers/CMSIS/Include/cmsis_gcc.h ****   extern const __zero_table_t __zero_table_end__;
+ 150:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 151:Drivers/CMSIS/Include/cmsis_gcc.h ****   for (__copy_table_t const* pTable = &__copy_table_start__; pTable < &__copy_table_end__; ++pTable
+ 152:Drivers/CMSIS/Include/cmsis_gcc.h ****     for(uint32_t i=0u; i<pTable->wlen; ++i) {
+ 153:Drivers/CMSIS/Include/cmsis_gcc.h ****       pTable->dest[i] = pTable->src[i];
+ 154:Drivers/CMSIS/Include/cmsis_gcc.h ****     }
+ 155:Drivers/CMSIS/Include/cmsis_gcc.h ****   }
+ 156:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 157:Drivers/CMSIS/Include/cmsis_gcc.h ****   for (__zero_table_t const* pTable = &__zero_table_start__; pTable < &__zero_table_end__; ++pTable
+ 158:Drivers/CMSIS/Include/cmsis_gcc.h ****     for(uint32_t i=0u; i<pTable->wlen; ++i) {
+ 159:Drivers/CMSIS/Include/cmsis_gcc.h ****       pTable->dest[i] = 0u;
+ 160:Drivers/CMSIS/Include/cmsis_gcc.h ****     }
+ 161:Drivers/CMSIS/Include/cmsis_gcc.h ****   }
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s 			page 9
+
+
+ 162:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 163:Drivers/CMSIS/Include/cmsis_gcc.h ****   _start();
+ 164:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 165:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 166:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __PROGRAM_START           __cmsis_start
+ 167:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 168:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 169:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __INITIAL_SP
+ 170:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __INITIAL_SP              __StackTop
+ 171:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 172:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 173:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __STACK_LIMIT
+ 174:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __STACK_LIMIT             __StackLimit
+ 175:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 176:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 177:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __VECTOR_TABLE
+ 178:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __VECTOR_TABLE            __Vectors
+ 179:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 180:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 181:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __VECTOR_TABLE_ATTRIBUTE
+ 182:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __VECTOR_TABLE_ATTRIBUTE  __attribute__((used, section(".vectors")))
+ 183:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 184:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 185:Drivers/CMSIS/Include/cmsis_gcc.h **** #if defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3U)
+ 186:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __STACK_SEAL
+ 187:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __STACK_SEAL              __StackSeal
+ 188:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 189:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 190:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __TZ_STACK_SEAL_SIZE
+ 191:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __TZ_STACK_SEAL_SIZE      8U
+ 192:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 193:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 194:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __TZ_STACK_SEAL_VALUE
+ 195:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __TZ_STACK_SEAL_VALUE     0xFEF5EDA5FEF5EDA5ULL
+ 196:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 197:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 198:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 199:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __TZ_set_STACKSEAL_S (uint32_t* stackTop) {
+ 200:Drivers/CMSIS/Include/cmsis_gcc.h ****   *((uint64_t *)stackTop) = __TZ_STACK_SEAL_VALUE;
+ 201:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 202:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 203:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 204:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 205:Drivers/CMSIS/Include/cmsis_gcc.h **** /* ##########################  Core Instruction Access  ######################### */
+ 206:Drivers/CMSIS/Include/cmsis_gcc.h **** /** \defgroup CMSIS_Core_InstructionInterface CMSIS Core Instruction Interface
+ 207:Drivers/CMSIS/Include/cmsis_gcc.h ****   Access to dedicated instructions
+ 208:Drivers/CMSIS/Include/cmsis_gcc.h ****   @{
+ 209:Drivers/CMSIS/Include/cmsis_gcc.h **** */
+ 210:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 211:Drivers/CMSIS/Include/cmsis_gcc.h **** /* Define macros for porting to both thumb1 and thumb2.
+ 212:Drivers/CMSIS/Include/cmsis_gcc.h ****  * For thumb1, use low register (r0-r7), specified by constraint "l"
+ 213:Drivers/CMSIS/Include/cmsis_gcc.h ****  * Otherwise, use general registers, specified by constraint "r" */
+ 214:Drivers/CMSIS/Include/cmsis_gcc.h **** #if defined (__thumb__) && !defined (__thumb2__)
+ 215:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __CMSIS_GCC_OUT_REG(r) "=l" (r)
+ 216:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __CMSIS_GCC_RW_REG(r) "+l" (r)
+ 217:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __CMSIS_GCC_USE_REG(r) "l" (r)
+ 218:Drivers/CMSIS/Include/cmsis_gcc.h **** #else
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s 			page 10
+
+
+ 219:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __CMSIS_GCC_OUT_REG(r) "=r" (r)
+ 220:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __CMSIS_GCC_RW_REG(r) "+r" (r)
+ 221:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __CMSIS_GCC_USE_REG(r) "r" (r)
+ 222:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 223:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 224:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 225:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   No Operation
+ 226:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details No Operation does nothing. This instruction can be used for code alignment purposes.
+ 227:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 228:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __NOP()                             __ASM volatile ("nop")
+ 229:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 230:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 231:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Wait For Interrupt
+ 232:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Wait For Interrupt is a hint instruction that suspends execution until one of a number o
+ 233:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 234:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __WFI()                             __ASM volatile ("wfi":::"memory")
+ 235:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 236:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 237:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 238:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Wait For Event
+ 239:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Wait For Event is a hint instruction that permits the processor to enter
+ 240:Drivers/CMSIS/Include/cmsis_gcc.h ****            a low-power state until one of a number of events occurs.
+ 241:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 242:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __WFE()                             __ASM volatile ("wfe":::"memory")
+ 243:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 244:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 245:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 246:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Send Event
+ 247:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Send Event is a hint instruction. It causes an event to be signaled to the CPU.
+ 248:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 249:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __SEV()                             __ASM volatile ("sev")
+ 250:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 251:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 252:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 253:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Instruction Synchronization Barrier
+ 254:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Instruction Synchronization Barrier flushes the pipeline in the processor,
+ 255:Drivers/CMSIS/Include/cmsis_gcc.h ****            so that all instructions following the ISB are fetched from cache or memory,
+ 256:Drivers/CMSIS/Include/cmsis_gcc.h ****            after the instruction has been completed.
+ 257:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 258:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __ISB(void)
+ 259:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 260:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("isb 0xF":::"memory");
+ 261:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 262:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 263:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 264:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 265:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Data Synchronization Barrier
+ 266:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Acts as a special kind of Data Memory Barrier.
+ 267:Drivers/CMSIS/Include/cmsis_gcc.h ****            It completes when all explicit memory accesses before this instruction complete.
+ 268:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 269:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __DSB(void)
+ 270:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 271:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("dsb 0xF":::"memory");
+ 272:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 273:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 274:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 275:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s 			page 11
+
+
+ 276:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Data Memory Barrier
+ 277:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Ensures the apparent order of the explicit memory operations before
+ 278:Drivers/CMSIS/Include/cmsis_gcc.h ****            and after the instruction, without ensuring their completion.
+ 279:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 280:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __DMB(void)
+ 212              		.loc 2 280 27 view .LVU61
+ 213              	.LBB7:
+ 281:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 282:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("dmb 0xF":::"memory");
+ 214              		.loc 2 282 3 view .LVU62
+ 215              		.syntax unified
+ 216              	@ 282 "Drivers/CMSIS/Include/cmsis_gcc.h" 1
+ 217 0048 BFF35F8F 		dmb 0xF
+ 218              	@ 0 "" 2
+ 219              		.thumb
+ 220              		.syntax unified
+ 221              	.LBE7:
+ 222              	.LBE6:
+  76:lib/ringbuffer/ringbuffer.c ****   rb->head += len;
+ 223              		.loc 1 76 3 view .LVU63
+ 224              		.loc 1 76 5 is_stmt 0 view .LVU64
+ 225 004c 6368     		ldr	r3, [r4, #4]
+ 226              		.loc 1 76 12 view .LVU65
+ 227 004e 3344     		add	r3, r3, r6
+  77:lib/ringbuffer/ringbuffer.c ****   return len;
+ 228              		.loc 1 77 10 view .LVU66
+ 229 0050 3046     		mov	r0, r6
+  76:lib/ringbuffer/ringbuffer.c ****   rb->head += len;
+ 230              		.loc 1 76 12 view .LVU67
+ 231 0052 6360     		str	r3, [r4, #4]
+ 232              		.loc 1 77 3 is_stmt 1 view .LVU68
+  78:lib/ringbuffer/ringbuffer.c **** }
+ 233              		.loc 1 78 1 is_stmt 0 view .LVU69
+ 234 0054 BDE8F081 		pop	{r4, r5, r6, r7, r8, pc}
+ 235              	.LVL19:
+ 236              	.L16:
+  50:lib/ringbuffer/ringbuffer.c ****   }
+ 237              		.loc 1 50 12 view .LVU70
+ 238 0058 0020     		movs	r0, #0
+ 239              		.loc 1 78 1 view .LVU71
+ 240 005a BDE8F081 		pop	{r4, r5, r6, r7, r8, pc}
+ 241              	.LVL20:
+ 242              	.L18:
+  72:lib/ringbuffer/ringbuffer.c ****   }
+ 243              		.loc 1 72 5 is_stmt 1 view .LVU72
+ 244 005e A6EB0802 		sub	r2, r6, r8
+ 245 0062 05EB0801 		add	r1, r5, r8
+ 246 0066 04F10C00 		add	r0, r4, #12
+ 247 006a FFF7FEFF 		bl	memcpy
+ 248              	.LVL21:
+ 249 006e EBE7     		b	.L12
+ 250              		.cfi_endproc
+ 251              	.LFE136:
+ 253              		.section	.text.RingBuffer_Read,"ax",%progbits
+ 254              		.align	1
+ 255              		.p2align 2,,3
+ 256              		.global	RingBuffer_Read
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s 			page 12
+
+
+ 257              		.syntax unified
+ 258              		.thumb
+ 259              		.thumb_func
+ 261              	RingBuffer_Read:
+ 262              	.LVL22:
+ 263              	.LFB137:
+  79:lib/ringbuffer/ringbuffer.c **** 
+  80:lib/ringbuffer/ringbuffer.c **** uint32_t RingBuffer_Read(RingBuffer *rb, void *dst, uint32_t len)
+  81:lib/ringbuffer/ringbuffer.c **** {
+ 264              		.loc 1 81 1 view -0
+ 265              		.cfi_startproc
+ 266              		@ args = 0, pretend = 0, frame = 0
+ 267              		@ frame_needed = 0, uses_anonymous_args = 0
+  82:lib/ringbuffer/ringbuffer.c ****   uint8_t *p = (uint8_t *)dst;
+ 268              		.loc 1 82 3 view .LVU74
+  83:lib/ringbuffer/ringbuffer.c ****   uint32_t mask, used, first;
+ 269              		.loc 1 83 3 view .LVU75
+  84:lib/ringbuffer/ringbuffer.c **** 
+  85:lib/ringbuffer/ringbuffer.c ****   if ((rb == NULL) || (p == NULL) || (len == 0U))
+ 270              		.loc 1 85 3 view .LVU76
+  81:lib/ringbuffer/ringbuffer.c ****   uint8_t *p = (uint8_t *)dst;
+ 271              		.loc 1 81 1 is_stmt 0 view .LVU77
+ 272 0000 F8B5     		push	{r3, r4, r5, r6, r7, lr}
+ 273              	.LCFI2:
+ 274              		.cfi_def_cfa_offset 24
+ 275              		.cfi_offset 3, -24
+ 276              		.cfi_offset 4, -20
+ 277              		.cfi_offset 5, -16
+ 278              		.cfi_offset 6, -12
+ 279              		.cfi_offset 7, -8
+ 280              		.cfi_offset 14, -4
+ 281              		.loc 1 85 6 view .LVU78
+ 282 0002 0446     		mov	r4, r0
+ 283 0004 10B3     		cbz	r0, .L25
+ 284 0006 0B46     		mov	r3, r1
+ 285              		.loc 1 85 20 discriminator 1 view .LVU79
+ 286 0008 01B3     		cbz	r1, .L25
+ 287 000a 1546     		mov	r5, r2
+ 288              		.loc 1 85 35 discriminator 2 view .LVU80
+ 289 000c F2B1     		cbz	r2, .L25
+  86:lib/ringbuffer/ringbuffer.c ****   {
+  87:lib/ringbuffer/ringbuffer.c ****     return 0U;
+  88:lib/ringbuffer/ringbuffer.c ****   }
+  89:lib/ringbuffer/ringbuffer.c **** 
+  90:lib/ringbuffer/ringbuffer.c ****   used = rb->head - rb->tail;
+ 290              		.loc 1 90 3 is_stmt 1 view .LVU81
+ 291              		.loc 1 90 12 is_stmt 0 view .LVU82
+ 292 000e 4268     		ldr	r2, [r0, #4]
+ 293              	.LVL23:
+ 294              		.loc 1 90 23 view .LVU83
+ 295 0010 8168     		ldr	r1, [r0, #8]
+ 296              	.LVL24:
+  91:lib/ringbuffer/ringbuffer.c **** 
+  92:lib/ringbuffer/ringbuffer.c ****   /* 整体读: 数据不够就读不出来 */
+  93:lib/ringbuffer/ringbuffer.c ****   if (len > used)
+ 297              		.loc 1 93 3 is_stmt 1 view .LVU84
+  90:lib/ringbuffer/ringbuffer.c **** 
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s 			page 13
+
+
+ 298              		.loc 1 90 8 is_stmt 0 view .LVU85
+ 299 0012 521A     		subs	r2, r2, r1
+ 300              	.LVL25:
+ 301              		.loc 1 93 6 view .LVU86
+ 302 0014 9542     		cmp	r5, r2
+ 303 0016 19D8     		bhi	.L25
+  94:lib/ringbuffer/ringbuffer.c ****   {
+  95:lib/ringbuffer/ringbuffer.c ****     return 0U;
+  96:lib/ringbuffer/ringbuffer.c ****   }
+  97:lib/ringbuffer/ringbuffer.c **** 
+  98:lib/ringbuffer/ringbuffer.c ****   mask = rb->size - 1U;
+ 304              		.loc 1 98 3 is_stmt 1 view .LVU87
+ 305              		.loc 1 98 12 is_stmt 0 view .LVU88
+ 306 0018 0668     		ldr	r6, [r0]
+  99:lib/ringbuffer/ringbuffer.c ****   first = rb->size - (rb->tail & mask);
+ 307              		.loc 1 99 25 view .LVU89
+ 308 001a A268     		ldr	r2, [r4, #8]
+ 309              	.LVL26:
+  98:lib/ringbuffer/ringbuffer.c ****   first = rb->size - (rb->tail & mask);
+ 310              		.loc 1 98 8 view .LVU90
+ 311 001c 701E     		subs	r0, r6, #1
+ 312              	.LVL27:
+ 313              		.loc 1 99 3 is_stmt 1 view .LVU91
+ 314              		.loc 1 99 32 is_stmt 0 view .LVU92
+ 315 001e 0240     		ands	r2, r2, r0
+ 316              		.loc 1 99 9 view .LVU93
+ 317 0020 B61A     		subs	r6, r6, r2
+ 318              	.LVL28:
+ 100:lib/ringbuffer/ringbuffer.c ****   if (first > len)
+ 319              		.loc 1 100 3 is_stmt 1 view .LVU94
+ 320              		.loc 1 100 6 is_stmt 0 view .LVU95
+ 321 0022 B542     		cmp	r5, r6
+ 322 0024 2F46     		mov	r7, r5
+ 323 0026 28BF     		it	cs
+ 324 0028 3746     		movcs	r7, r6
+ 325              	.LVL29:
+ 101:lib/ringbuffer/ringbuffer.c ****   {
+ 102:lib/ringbuffer/ringbuffer.c ****     first = len;
+ 103:lib/ringbuffer/ringbuffer.c ****   }
+ 104:lib/ringbuffer/ringbuffer.c **** 
+ 105:lib/ringbuffer/ringbuffer.c ****   __DMB();                    /* 确认 head 发布的数据已可见 */
+ 326              		.loc 1 105 3 is_stmt 1 view .LVU96
+ 327              	.LBB8:
+ 328              	.LBI8:
+ 280:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 329              		.loc 2 280 27 view .LVU97
+ 330              	.LBB9:
+ 331              		.loc 2 282 3 view .LVU98
+ 332              		.syntax unified
+ 333              	@ 282 "Drivers/CMSIS/Include/cmsis_gcc.h" 1
+ 334 002a BFF35F8F 		dmb 0xF
+ 335              	@ 0 "" 2
+ 336              		.thumb
+ 337              		.syntax unified
+ 338              	.LBE9:
+ 339              	.LBE8:
+ 106:lib/ringbuffer/ringbuffer.c ****   memcpy(p, &rb->data[rb->tail & mask], first);
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s 			page 14
+
+
+ 340              		.loc 1 106 3 view .LVU99
+ 341              		.loc 1 106 25 is_stmt 0 view .LVU100
+ 342 002e A168     		ldr	r1, [r4, #8]
+ 343              		.loc 1 106 32 view .LVU101
+ 344 0030 0140     		ands	r1, r1, r0
+ 345              		.loc 1 106 13 view .LVU102
+ 346 0032 0C31     		adds	r1, r1, #12
+ 347              		.loc 1 106 3 view .LVU103
+ 348 0034 2144     		add	r1, r1, r4
+ 349 0036 3A46     		mov	r2, r7
+ 350 0038 1846     		mov	r0, r3
+ 351              	.LVL30:
+ 352              		.loc 1 106 3 view .LVU104
+ 353 003a FFF7FEFF 		bl	memcpy
+ 354              	.LVL31:
+ 107:lib/ringbuffer/ringbuffer.c ****   if (len > first)
+ 355              		.loc 1 107 3 is_stmt 1 view .LVU105
+ 356              		.loc 1 107 6 is_stmt 0 view .LVU106
+ 357 003e B542     		cmp	r5, r6
+ 358 0040 06D8     		bhi	.L27
+ 359              	.L21:
+ 108:lib/ringbuffer/ringbuffer.c ****   {
+ 109:lib/ringbuffer/ringbuffer.c ****     memcpy(p + first, &rb->data[0], len - first);
+ 110:lib/ringbuffer/ringbuffer.c ****   }
+ 111:lib/ringbuffer/ringbuffer.c **** 
+ 112:lib/ringbuffer/ringbuffer.c ****   rb->tail += len;
+ 360              		.loc 1 112 3 is_stmt 1 view .LVU107
+ 361              		.loc 1 112 5 is_stmt 0 view .LVU108
+ 362 0042 A368     		ldr	r3, [r4, #8]
+ 363              		.loc 1 112 12 view .LVU109
+ 364 0044 2B44     		add	r3, r3, r5
+ 113:lib/ringbuffer/ringbuffer.c ****   return len;
+ 365              		.loc 1 113 10 view .LVU110
+ 366 0046 2846     		mov	r0, r5
+ 112:lib/ringbuffer/ringbuffer.c ****   return len;
+ 367              		.loc 1 112 12 view .LVU111
+ 368 0048 A360     		str	r3, [r4, #8]
+ 369              		.loc 1 113 3 is_stmt 1 view .LVU112
+ 114:lib/ringbuffer/ringbuffer.c **** }
+ 370              		.loc 1 114 1 is_stmt 0 view .LVU113
+ 371 004a F8BD     		pop	{r3, r4, r5, r6, r7, pc}
+ 372              	.LVL32:
+ 373              	.L25:
+  87:lib/ringbuffer/ringbuffer.c ****   }
+ 374              		.loc 1 87 12 view .LVU114
+ 375 004c 0020     		movs	r0, #0
+ 376              	.LVL33:
+ 377              		.loc 1 114 1 view .LVU115
+ 378 004e F8BD     		pop	{r3, r4, r5, r6, r7, pc}
+ 379              	.LVL34:
+ 380              	.L27:
+ 109:lib/ringbuffer/ringbuffer.c ****   }
+ 381              		.loc 1 109 5 is_stmt 1 view .LVU116
+ 382 0050 EA1B     		subs	r2, r5, r7
+ 383 0052 3844     		add	r0, r0, r7
+ 384 0054 04F10C01 		add	r1, r4, #12
+ 385 0058 FFF7FEFF 		bl	memcpy
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s 			page 15
+
+
+ 386              	.LVL35:
+ 387 005c F1E7     		b	.L21
+ 388              		.cfi_endproc
+ 389              	.LFE137:
+ 391 005e 00BF     		.section	.text.RingBuffer_Clear,"ax",%progbits
+ 392              		.align	1
+ 393              		.p2align 2,,3
+ 394              		.global	RingBuffer_Clear
+ 395              		.syntax unified
+ 396              		.thumb
+ 397              		.thumb_func
+ 399              	RingBuffer_Clear:
+ 400              	.LVL36:
+ 401              	.LFB138:
+ 115:lib/ringbuffer/ringbuffer.c **** 
+ 116:lib/ringbuffer/ringbuffer.c **** void RingBuffer_Clear(RingBuffer *rb)
+ 117:lib/ringbuffer/ringbuffer.c **** {
+ 402              		.loc 1 117 1 view -0
+ 403              		.cfi_startproc
+ 404              		@ args = 0, pretend = 0, frame = 0
+ 405              		@ frame_needed = 0, uses_anonymous_args = 0
+ 406              		@ link register save eliminated.
+ 118:lib/ringbuffer/ringbuffer.c ****   if (rb != NULL)
+ 407              		.loc 1 118 3 view .LVU118
+ 408              		.loc 1 118 6 is_stmt 0 view .LVU119
+ 409 0000 08B1     		cbz	r0, .L28
+ 119:lib/ringbuffer/ringbuffer.c ****   {
+ 120:lib/ringbuffer/ringbuffer.c ****     rb->tail = rb->head;
+ 410              		.loc 1 120 5 is_stmt 1 view .LVU120
+ 411              		.loc 1 120 18 is_stmt 0 view .LVU121
+ 412 0002 4368     		ldr	r3, [r0, #4]
+ 413              		.loc 1 120 14 view .LVU122
+ 414 0004 8360     		str	r3, [r0, #8]
+ 415              	.L28:
+ 121:lib/ringbuffer/ringbuffer.c ****   }
+ 122:lib/ringbuffer/ringbuffer.c **** }
+ 416              		.loc 1 122 1 view .LVU123
+ 417 0006 7047     		bx	lr
+ 418              		.cfi_endproc
+ 419              	.LFE138:
+ 421              		.text
+ 422              	.Letext0:
+ 423              		.file 3 "D:\\vscode\\stm32cubecltv122\\stm32cubeclt_1.22.0-Win-x86_64.exe\\anzhuang\\STM32CubeCLT_
+ 424              		.file 4 "D:\\vscode\\stm32cubecltv122\\stm32cubeclt_1.22.0-Win-x86_64.exe\\anzhuang\\STM32CubeCLT_
+ 425              		.file 5 "lib/ringbuffer/ringbuffer.h"
+ 426              		.file 6 "D:\\vscode\\stm32cubecltv122\\stm32cubeclt_1.22.0-Win-x86_64.exe\\anzhuang\\STM32CubeCLT_
+ 427              		.file 7 "D:\\vscode\\stm32cubecltv122\\stm32cubeclt_1.22.0-Win-x86_64.exe\\anzhuang\\STM32CubeCLT_
+ 428              		.file 8 "<built-in>"
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s 			page 16
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 ringbuffer.c
+C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s:21     .text.RingBuffer_Init:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s:28     .text.RingBuffer_Init:00000000 RingBuffer_Init
+C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s:88     .text.RingBuffer_Deinit:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s:95     .text.RingBuffer_Deinit:00000000 RingBuffer_Deinit
+C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s:111    .text.RingBuffer_Write:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s:118    .text.RingBuffer_Write:00000000 RingBuffer_Write
+C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s:254    .text.RingBuffer_Read:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s:261    .text.RingBuffer_Read:00000000 RingBuffer_Read
+C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s:392    .text.RingBuffer_Clear:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\ccmB6Npg.s:399    .text.RingBuffer_Clear:00000000 RingBuffer_Clear
+
+UNDEFINED SYMBOLS
+malloc
+free
+memcpy

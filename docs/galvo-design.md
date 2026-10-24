@@ -27,11 +27,11 @@
                   ┌──────────────────────────────────────────────────────┐
    上位机          │ STM32F407                                            │
   ┌───────┐        │                                                      │
-  │ 串口  │─TX────▶│ PA10 USART1_RX ─▶ 帧解析 ─▶ 最新点缓存               │
+  │ 串口  │─TX────▶│ PA10 USART1_RX ─▶ 帧解析 ─▶ 环形缓冲(8 KB)           │
   └───────┘        │                                │                     │
                    │                                ▼                     │
                    │                          Galvo_Task()                │
-                   │                     查 LUT / 算角度 / 编码           │
+                   │             S 曲线插值 / 查 LUT / 算角度 / 编码      │
                    │                                │                     │
                    │                                ▼                     │
                    │                          stage[20]                  │
@@ -46,6 +46,8 @@
                    │            GPIOB->BSRR  (PB7 SYNC / PB5 X / PB6 Y)   │
                    │                                                      │
                    │      TIM1_CH1 (PE9) ─▶ 2 MHz CLK                     │
+                   │                                                      │
+                   │      到达目标点 + 稳定时间后 ─▶ Laser_On / Laser_Off  │
                    └──────────────────────────────────────────────────────┘
 ```
 
@@ -106,10 +108,22 @@
 ```
 Galvo/
   comm.h         // 传输无关接口：Comm_Init / Comm_PopPoint
-  comm_uart.c    // 当前传输实现：USART1 + 帧解析 + 最新点缓存
-  galvo.h        // 对外 API、参数宏
-  galvo.c        // 帧编码、DMA 回调、LUT 换算、双半区管理
+  comm_uart.c    // 当前传输实现：USART1 + 8 字节帧解析 + 环形缓冲
+  galvo.h        // 对外 API、标定参数
+  galvo.c        // S 曲线调度、激光时序、LUT 换算、编码、DMA 回调
   galvo_lut.h    // 校准表（128×128 ×2，当前全 0）与表参数
+
+Laser/
+  laser.h        // Laser_Init / Laser_On / Laser_Off
+  laser.c        // 内部暂不实现
+
+lib/
+  ringbuffer/
+    ringbuffer.h // 柔性数组环形缓冲区：Init/Deinit/Write/Read/Clear
+    ringbuffer.c
+  scurve/
+    scurve.h     // S 曲线插值 + 规划参数（点数/间隔/稳定时间）
+    scurve.c
 ```
 
 CubeMX 生成的 `MX_TIM1_Init` / `MX_DMA_Init` / `MX_USART1_UART_Init` 保持不变；`stm32f4xx_it.c` 中的中断向量只调用 HAL。
@@ -120,45 +134,57 @@ CubeMX 生成的 `MX_TIM1_Init` / `MX_DMA_Init` / `MX_USART1_UART_Init` 保持�
 
 ```c
 /* comm.h —— 传输无关 */
-void     Comm_Init(void);                     /* 初始化底层传输并开始接收 */
-bool     Comm_PopPoint(int16_t *x, int16_t *y);/* 取最新坐标，无新点时返回 false */
+typedef struct { int16_t x; int16_t y; uint8_t laser; } CommPoint;
+
+void     Comm_Init(void);                     /* 分配环形缓冲、初始化传输并开始接收 */
+bool     Comm_PopPoint(CommPoint *pt);        /* 取一个目标点，队列空返回 false */
 uint32_t Comm_GetCrcErrorCount(void);         /* 校验错误计数 */
 
 /* galvo.h */
 void     Galvo_Init(void);                    /* 填中心帧、注册回调、启动 DMA/TIM */
-void     Galvo_Task(void);                    /* 主循环调用：出队、换算、编码 */
+void     Galvo_Task(void);                    /* 主循环调用：规划、换算、编码 */
+void     Galvo_DwtInit(void);                 /* 打开 DWT 周期计数（调试计时） */
 void     Galvo_SetControlCode(uint8_t code);  /* 0b001 标准 / 0b011 串口链路测试 */
+
+/* laser.h —— 内部暂不实现 */
+void     Laser_Init(void);
+void     Laser_On(void);
+void     Laser_Off(void);
+
+/* scurve.h —— 纯数学 */
+void     SCurve_Start(SCurve *c, int16_t sx, int16_t sy, int16_t tx, int16_t ty);
+bool     SCurve_Next(SCurve *c, int16_t *x, int16_t *y);
+bool     SCurve_Done(const SCurve *c);
 ```
 
-`comm_uart.c` 负责逐字节中断、帧解析入队；`HAL_UART_RxCpltCallback` 解析完立刻重挂接收。
+`comm_uart.c` 负责逐字节中断、帧解析入缓冲；`HAL_UART_RxCpltCallback` 解析完立刻重挂接收。
 
 ---
 
 ## 5. 数据流
 
-1. **接收**：USART1 每收到 1 字节进入中断，状态机解析 `AA 55 ...` 帧；校验通过后把 `(x, y)`（共 4 字节）写入最新点缓存，并置「有新点」标志。
-2. **转换（主循环）**：`Galvo_Task()` 取最新点，查 LUT 计算 α、β，换算成 16 bit 命令字，编码为 20 个 BSRR 控制字写入 `stage[20]`，最后发布新的 `stage_gen`。
-3. **分发（DMA 中断）**：HT/TC 中断在帧边界把 `stage[]` 拷贝到「刚发完、下一轮才会被读」的那一半（A 或 B）。
-4. **输出（纯硬件）**：DMA 循环读取 40 word，每个 TIM1 更新事件搬一个 word 到 `GPIOB->BSRR`；TIM1_CH1 同时翻转 CLK。
+1. **接收**：USART1 每收到 1 字节进入中断，状态机解析 `AA 55 ...` 帧；校验通过后把 `(x, y, laser)`（6 字节）整体写入环形缓冲区。
+2. **规划（主循环）**：`Galvo_Task()` 每 ≥100 µs 产出一个规划点：到达上一个目标并稳定 200 µs 后取新目标，按 S 曲线插值出中间坐标。
+3. **转换（主循环）**：插值坐标查 LUT 得到 α、β，换算成 16 bit 命令字，编码为 20 个 BSRR 控制字写入 `stage[20]`，发布新的 `stage_gen`。
+4. **分发（DMA 中断）**：HT/TC 中断在帧边界把 `stage[]` 拷贝到「刚发完、下一轮才会被读」的那一半（A 或 B）。
+5. **输出（纯硬件）**：DMA 循环读取 40 word，每个 TIM1 更新事件搬一个 word 到 `GPIOB->BSRR`；TIM1_CH1 同时翻转 CLK。
 
-主循环被阻塞时，输出停留在上一帧，但**波形不会中断**；恢复后直接跳到最新坐标。
+主循环被阻塞时，输出停留在上一帧，但**波形不会中断**；恢复后从规划器当前状态继续。
 
-### 5.1 最新点缓存与 LUT 的区别
+### 5.1 环形缓冲与 LUT 的区别
 
 这两个「表」经常被混淆，职责完全不同：
 
-| | 最新点缓存 | LUT（校准表） |
+| | 环形缓冲 | LUT（校准表） |
 |---|---|---|
-| 内容 | 上位机刚发来的 `(x, y)` 坐标 | 每个坐标处的角度校正量 |
-| 尺寸 | 2 槽 × 4 B（双缓冲） | 128 × 128 × 2 轴 × 2 B |
-| 何时写 | 串口中断每收到一帧写一次（覆盖旧值） | 标定完成后写死，重新编译烧录 |
-| 何时读 | 每取一次新点 | 每换算一个点读 4 个值（双线性） |
-| 存储 | RAM（运行时数据） | Flash（`const`，掉电保留） |
-| 无新数据/全 0 时 | 保持上一坐标 | 退化为纯线性 f-theta 映射 |
+| 内容 | 待执行的目标点 `(x, y, laser)` | 每个坐标处的角度校正量 |
+| 尺寸 | 8 KB（≈1365 个点，`malloc`） | 128 × 128 × 2 轴 × 2 B |
+| 何时写 | 串口中断每收完一帧写一个点 | 标定完成后写死，重新编译烧录 |
+| 何时读 | 规划器每开始一段新轨迹取一个 | 每换算一个点读 4 个值（双线性） |
+| 存储 | RAM（堆，运行时数据） | Flash（`const`，掉电保留） |
+| 为空/全 0 时 | 保持当前位置 | 退化为纯线性 f-theta 映射 |
 
-一句话：**最新点缓存只存「下一步要画到哪」，LUT 是「怎么把点画准」的静态系数表。**
-
-用两个槽而不是一个 `x`/`y` 变量，是因为两个中断有抢占关系：取点端（DMA 中断，优先级 0）可以打断写点端（串口中断，优先级 1）。若共用一个变量，取点可能拿到「新的 x + 旧的 y」。双槽让写者总写另一槽、写完置标志，读者永远读完整的一组。
+一句话：**环形缓冲存「后面要走到哪」，LUT 是「怎么把点画准」的静态系数表。**
 
 ---
 
@@ -169,33 +195,37 @@ void     Galvo_SetControlCode(uint8_t code);  /* 0b001 标准 / 0b011 串口链�
 ### 6.1 帧格式
 
 ```
-偏移  0     1     2     3     4     5     6
-     AA    55    XL    XH    YL    YH    CS
+偏移  0     1     2     3     4     5      6       7
+     AA    55    XL    XH    YL    YH   LASER     CS
 ```
 
 - X、Y：`int16`，**小端**，范围 −32768 ~ +32767
-- CS：前 6 字节逐字节异或
-- 帧之间无间隔要求
+- LASER：0 = 关，1 = 开，其余值按关处理
+- CS：前 7 字节逐字节异或
+- 帧之间无间隔要求，可以一次连续下发很多个目标点
+
+激光标志描述的是「移动到该目标点的这一段」：到达上一个目标点并稳定后，开/关激光，然后开始本段轨迹。
 
 ### 6.2 示例
 
-| 坐标 | 字节流 |
-|---|---|
-| (0, 0) | `AA 55 00 00 00 00 FF` |
-| (1000, −1000) | `AA 55 E8 03 18 FC F0` |
-| (20000, 0) | `AA 55 20 4E 00 00 91` |
-| (−20000, 0) | `AA 55 E0 B1 00 00 AE` |
-| (32767, −32768) | `AA 55 FF 7F 00 80 FF` |
+| 坐标 | 激光 | 字节流 |
+|---|---|---|
+| (0, 0) | 关 | `AA 55 00 00 00 00 00 FF` |
+| (1000, −1000) | 关 | `AA 55 E8 03 18 FC 00 F0` |
+| (1000, −1000) | 开 | `AA 55 E8 03 18 FC 01 F1` |
+| (20000, 0) | 开 | `AA 55 20 4E 00 00 01 90` |
 
 ### 6.3 速率
 
-单帧 7 字节 = 70 bit。115200 bps 下最短间隔约 **0.61 ms/帧**（≈1642 帧/s）。取点端 10 kHz 消费，比串口快一个数量级，正常情况下每个点都会被取走。
+单帧 8 字节 = 80 bit。115200 bps 下最短间隔约 **0.69 ms/帧**（≈1440 帧/s）。
+
+规划端每个目标点耗时 = 首点 + 6×100 µs + 200 µs 稳定 ≈ 800 µs，即约 1250 点/s，慢于串口，所以缓冲不会持续增长。若上位机以最大速率连续下发，建议把波特率提到 230400 或 460800。
 
 ### 6.4 解析容错
 
 - 任意位置重新搜索 `AA 55`，支持 `AA AA 55`。
 - 校验失败丢弃当前帧并重新同步。
-- 新点覆盖尚未取走的旧点（只保留最新坐标）。
+- 环形缓冲空间不足时整帧丢弃，不产生半条记录（正常速率下不会发生）。
 
 ---
 
@@ -327,21 +357,37 @@ static void galvo_dma_cplt_cb(DMA_HandleTypeDef *hdma)
 ### 8.5 主循环发布
 
 ```c
-static void galvo_task(void)
+void Galvo_Task(void)
 {
-    int16_t x, y;
+    now = DWT->CYCCNT;
 
-    if (!Comm_PopPoint(&x, &y)) {
-        return;
+    /* 相邻规划点至少间隔 SCURVE_INTERVAL_US */
+    if (now - last_point_cycle < INTERVAL_CYCLES) return;
+
+    if (state == IDLE) {
+        /* 到达目标后先稳定 SCURVE_SETTLE_US，才允许取下一个目标 */
+        if (now - last_arrive_cycle < SETTLE_CYCLES) return;
+        if (!Comm_PopPoint(&pt)) return;
+
+        if (pt.laser) Laser_On(); else Laser_Off();   /* 激光在段起点切换 */
+        SCurve_Start(&curve, cur_x, cur_y, pt.x, pt.y);
+        state = MOVING;
     }
 
-    /* 上一代还没铺满两个区时不覆盖 stage（按主机速率永远不会命中） */
-    if (a_gen != stage_gen || b_gen != stage_gen) {
-        galvo_dbg.drop++;
-        return;
-    }
+    /* 上一代还没铺满两个区时不覆盖 stage（等 DMA 中断追上） */
+    if (a_gen != stage_gen || b_gen != stage_gen) return;
+
+    if (!SCurve_Next(&curve, &x, &y)) { state = IDLE; return; }
 
     build_stage(x, y, stage);   /* LUT + 角度换算 + 20 拍编码 */
+    cur_x = x; cur_y = y;
+    last_point_cycle = now;
+
+    if (SCurve_Done(&curve)) {
+        state = IDLE;                 /* 到达目标点 */
+        last_arrive_cycle = now;      /* 开始计稳定时间 */
+    }
+
     __DMB();
     stage_gen++;
 }
@@ -353,10 +399,12 @@ static void galvo_task(void)
 
 | 场景 | 延迟 |
 |---|---|
-| 新点到达 → 主循环算完 | 几十 µs（取决于主循环） |
-| 算完 → 第一半被发送 | ≤10 µs |
-| 算完 → 两半都更新 | ≤20 µs |
+| 串口收完一帧 → 写入环形缓冲 | 中断内完成，几 µs |
+| 规划点出队 → 编码完并发布 | 几 µs |
+| 编码完 → 第一半被发送 | ≤10 µs |
+| 编码完 → 两半都更新 | ≤20 µs |
 | 旧帧最长停留 | **10 µs**（要求 ≤500 µs） |
+| 一个目标点的执行时间 | 7 个点 × 100 µs ≈ 600 µs + 200 µs 稳定 |
 
 ### 8.7 死守的规则
 
@@ -364,6 +412,39 @@ static void galvo_task(void)
 2. 运行中不改 TIM1 的 ARR/CCR；
 3. 除 DMA 外，任何代码都不写 `GPIOB->BSRR`，也不对 PB5/6/7 调 `HAL_GPIO_WritePin`；
 4. DMA 出错中断只记录故障，恢复操作会造成断拍，仅在故障时使用。
+
+### 8.8 S 曲线与激光时序
+
+参数集中在 `lib/scurve/scurve.h`：
+
+```c
+#define SCURVE_POINTS       7U      /* 每段规划点数（含终点） */
+#define SCURVE_INTERVAL_US  100U    /* 相邻规划点最小间隔 */
+#define SCURVE_SETTLE_US    200U    /* 到达目标后的稳定时间 */
+```
+
+插值公式（`u = k / SCURVE_POINTS`，`k = 1..N`）：
+
+```
+s = 3u² − 2u³
+P(k) = P_start + (P_target − P_start) × s
+```
+
+端点速度为 0，等效 S 形加减速；中间坐标仍走 LUT + 角度换算，标定对面内的每个规划点同样生效。
+
+时间线（一个目标点）：
+
+```
+t=0        取到目标点，按 laser 标志切换激光，输出第 1 个规划点
+t=100µs    第 2 个点
+...
+t=600µs    第 7 个点 = 目标点（到位）
+t=800µs    稳定 200 µs 结束，允许取下一个目标点
+```
+
+注意第 1 个规划点在取到目标点的同时输出，它与上一段的最后一个点之间隔着 200 µs 稳定时间，仍然满足 ≥100 µs 的间隔要求。
+
+激光切换发生在**取到下一个目标点时**，也就是上一目标已到达且稳定时间已过 —— 与需求「到达上一个目标点后开启/关闭」一致。队列为空时激光保持当前状态。
 
 ---
 
@@ -473,11 +554,11 @@ cy = clamp(cy, 0, 65535);
 | 中断 | 优先级 | 职责 |
 |---|---|---|
 | DMA2_Stream5 | 0（最高） | 每帧边界把 `stage` 拷到空闲半区 |
-| USART1 | 1 | 逐字节解析，更新最新点 |
+| USART1 | 1 | 逐字节解析，写入环形缓冲 |
 | SysTick | 15 | HAL 时基 |
 
 - DMA 中断可抢占串口中断；拷贝只有 80 字节，不会造成串口丢字节（115200 下字节间隔 87 µs）。
-- 主循环与中断之间只用 `volatile` 变量和「写另一槽 + 置标志」的双槽交接，不需要关中断。
+- 主循环与中断之间用一个单生产者/单消费者环形缓冲 + `volatile` 索引交接，不需要关中断。
 - **关中断不会停止 DMA 和 TIM1**，所以即使将来加入短临界区，也不影响波形。
 
 ---
@@ -489,6 +570,14 @@ cy = clamp(cy, 0, 65535);
 #define XY_BEATS              20U
 #define XY_FRAME_PERIOD_US    10U
 #define XY_FRAME_RATE_HZ      100000U
+
+/* 通信 */
+#define COMM_RING_SIZE        8192U    /* 环形缓冲字节数，2 的幂 */
+
+/* 轨迹规划（lib/scurve/scurve.h） */
+#define SCURVE_POINTS         7U       /* 每段规划点数（含终点） */
+#define SCURVE_INTERVAL_US    100U     /* 相邻规划点最小间隔 */
+#define SCURVE_SETTLE_US      200U     /* 到达目标后的稳定时间 */
 
 /* LUT */
 #define GALVO_LUT_SIZE        128
@@ -513,10 +602,11 @@ cy = clamp(cy, 0, 65535);
 | LUT（128×128×2，int16） | 64 KB | Flash（`.rodata`） |
 | 代码 + HAL | 约 20–25 KB | Flash |
 | `frame` + `stage` | 240 B | RAM |
-| 最新点缓存（2 槽 × 4 B） | 8 B | RAM |
+| 环形缓冲（malloc） | 8 KB | RAM（堆） |
+| S 曲线状态 + 调试变量 | < 100 B | RAM |
 | HAL 句柄/栈等 | 约 2–3 KB | RAM |
 
-F407VET6 资源：512 KB Flash / 192 KB RAM，余量充足。
+`_Min_Heap_Size` 已从 `0x200` 提高到 `0x4000`（16 KB），保证 8 KB 环形缓冲分配成功。F407VET6 资源：512 KB Flash / 192 KB RAM，余量充足。
 
 ---
 
@@ -524,14 +614,17 @@ F407VET6 资源：512 KB Flash / 192 KB RAM，余量充足。
 
 1. `HAL_Init()`、`SystemClock_Config()`；
 2. `MX_DMA_Init()`、`MX_GPIO_Init()`、`MX_TIM1_Init()`；
-3. `Comm_Init()`：初始化当前传输（USART1）并启动接收；
-4. `Galvo_Init()`：
+3. `Galvo_DwtInit()`：打开 DWT 周期计数（规划计时用）；
+4. `Laser_Init()`：初始化激光控制，默认关闭；
+5. `Comm_Init()`：分配 8 KB 环形缓冲、初始化 USART1 并启动接收；
+6. `Galvo_Init()`：
    1. 用中心坐标（0,0）预填 `frame[0]` 和 `frame[1]`，**避免 DMA 启动后先发未初始化数据**；
    2. 注册 DMA HT/TC/Error 回调；
    3. `__HAL_TIM_ENABLE_DMA(&htim1, TIM_DMA_UPDATE)`；
    4. `HAL_DMA_Start_IT(&hdma_tim1_up, frame, &GPIOB->BSRR, 40)`；
    5. `__HAL_TIM_MOE_ENABLE(&htim1)`、`HAL_TIM_PWM_Start()`、`HAL_TIM_Base_Start()`；
-5. `while (1) { Galvo_Task(); }`。
+   6. `Laser_Off()`，并复位规划器状态；
+7. `while (1) { Galvo_Task(); }`。
 
 ---
 
@@ -557,25 +650,25 @@ F407VET6 资源：512 KB Flash / 192 KB RAM，余量充足。
 | 用例 | 期望 |
 |---|---|
 | 发送 `(0,0)`（LUT 全 0） | 数据位 = `0x8000` |
-| 发送 `(1000,-1000)` | X = `0x83E8`，Y = `0x7C18` |
-| 连续发送圆轨迹 | 光斑连续画圆，无跳变 |
+| 发送 `(1000,-1000)`，laser=0 | X = `0x83E8`，Y = `0x7C18` |
+| 发送一个目标点 | 分 7 步走完，每步 ≥100 µs，最后一步精确等于目标 |
+| 到达目标后再发下一个 | 中间至少隔 200 µs 稳定时间 |
+| 一次下发 100 个点 | 依次执行，缓冲不溢出 |
+| 目标点 laser=1 / 0 | 到达前一目标并稳定后，激光相应开 / 关 |
 | 停止发送 | 保持最后坐标，波形不中断 |
 | 发送错误校验帧 | 被丢弃，不产生动作 |
-| 连续发送 1 分钟 | 无丢帧、无溢出（观察计数） |
 | 拔掉串口 | 输出保持，CLK 不中断 |
 
-### 14.4 调试计数
+### 14.4 调试变量
 
-```c
-volatile struct {
-    uint32_t rx_ok;
-    uint32_t rx_crc_err;
-    uint32_t drop;
-    uint32_t dma_error;
-} galvo_dbg;
-```
+| 变量 | 含义 |
+|---|---|
+| `g_dma_copy_cycles` | DMA 中断里一次拷贝的耗时（DWT 周期） |
+| `g_rx_to_dma_cycles` | 收完一帧 → 写进 DMA 缓冲的耗时 |
+| `Comm_GetCrcErrorCount()` | 校验失败帧数 |
+| `Galvo_GetDmaErrorCount()` | DMA 故障次数，必须为 0 |
 
-建议在调试器中观察这些计数；`drop` 长期为 0，`dma_error` 必须为 0。当前传输层的校验错误由 `Comm_GetCrcErrorCount()` 提供。
+DWT 周期换算：168 周期 = 1 µs。
 
 ---
 
@@ -591,6 +684,9 @@ volatile struct {
 | 上电顺序 | 先用中心帧预填缓冲，再启动 DMA |
 | 浮点 | 必须保持 hard-float 编译选项（已验证） |
 | 坐标单位 | 上位机下发的是控制卡坐标系下的 16 bit 值，不是物理角度 |
+| 环形缓冲用堆 | `_Min_Heap_Size` 必须 ≥ 缓冲大小 + 余量；`RingBuffer_Init` 失败会进 `Error_Handler` |
+| 激光接口为空 | `Laser_On/Off/Init` 当前只是占位，接实际驱动前激光不会动作 |
+| 规划参数 | 改 `SCURVE_POINTS` 会改变单段耗时；点数 × 间隔必须小于上位机的发送周期，否则缓冲持续增长 |
 
 ---
 
@@ -628,8 +724,8 @@ import serial, struct, functools
 
 ser = serial.Serial('COM3', 115200)
 
-def send(x, y):
-    f = bytes([0xAA, 0x55]) + struct.pack('<hh', x, y)
+def send(x, y, laser=0):
+    f = bytes([0xAA, 0x55]) + struct.pack('<hh', x, y) + bytes([1 if laser else 0])
     f += bytes([functools.reduce(int.__xor__, f, 0)])
     ser.write(f)
 ```

@@ -53,7 +53,6 @@ void Galvo_SetControlCode(uint8_t code);
 /**
   * @brief 调试计数
   */
-uint32_t Galvo_GetDropCount(void);
 uint32_t Galvo_GetDmaErrorCount(void);
 
 /* ---- 计时（调试观测） ---------------------------------------------------- */

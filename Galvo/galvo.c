@@ -14,6 +14,8 @@
 #include "galvo.h"
 #include "galvo_lut.h"
 #include "comm.h"
+#include "scurve.h"
+#include "laser.h"
 #include "tim.h"
 #include "main.h"
 
@@ -43,8 +45,27 @@ static volatile uint32_t galvo_b_gen = 0U;
 
 static uint8_t galvo_ctrl = 0x1U;           /* 控制字 001 */
 
-static volatile uint32_t galvo_drop = 0U;
 static volatile uint32_t galvo_dma_err = 0U;
+
+/* ---- S 曲线规划 ---------------------------------------------------------- */
+typedef enum
+{
+  GALVO_IDLE = 0,               /* 等待下一个目标点 */
+  GALVO_MOVING                  /* 正在按 S 曲线走向目标点 */
+} galvo_plan_state_t;
+
+static SCurve galvo_scurve;
+static galvo_plan_state_t galvo_plan_state = GALVO_IDLE;
+static int16_t galvo_cur_x = 0;            /* 当前输出的坐标 */
+static int16_t galvo_cur_y = 0;
+static uint32_t galvo_last_point_cycle = 0U;   /* 上一个规划点的输出时刻 */
+static uint32_t galvo_last_arrive_cycle = 0U;  /* 到达上一个目标点的时刻 */
+
+/* µs → DWT 周期（168 MHz 下 1 µs = 168 周期） */
+static uint32_t galvo_us_to_cycles(uint32_t us)
+{
+  return us * (SystemCoreClock / 1000000U);
+}
 
 /* ---- 调试计时 ---- */
 volatile uint32_t g_dma_copy_cycles = 0U;
@@ -234,6 +255,15 @@ void Galvo_Init(void)
   galvo_a_gen = 0U;
   galvo_b_gen = 0U;
 
+  /* 规划器从原点、静止状态开始 */
+  galvo_plan_state = GALVO_IDLE;
+  galvo_cur_x = 0;
+  galvo_cur_y = 0;
+  galvo_last_point_cycle = 0U;
+  galvo_last_arrive_cycle = 0U;
+
+  Laser_Off();                 /* 上电默认光闸关闭 */
+
   /* 先填中心帧，避免 DMA 启动后先发出未初始化数据 */
   galvo_build_stage(0, 0, galvo_stage);
   memcpy(galvo_frame[0], galvo_stage, sizeof(galvo_stage));
@@ -272,21 +302,68 @@ void Galvo_Init(void)
 
 void Galvo_Task(void)
 {
+  uint32_t now;
   int16_t x, y;
 
-  if (!Comm_PopPoint(&x, &y))
+  now = DWT->CYCCNT;
+
+  /* 相邻规划点的最小间隔 */
+  if ((now - galvo_last_point_cycle) < galvo_us_to_cycles(SCURVE_INTERVAL_US))
   {
     return;
   }
 
-  /* 上一代还没铺满两个半区时不动 stage（正常速率下永远不会命中） */
+  if (galvo_plan_state == GALVO_IDLE)
+  {
+    CommPoint pt;
+
+    /* 到达目标点后的稳定时间，过了才允许写入下一段并切换激光 */
+    if ((now - galvo_last_arrive_cycle) < galvo_us_to_cycles(SCURVE_SETTLE_US))
+    {
+      return;
+    }
+
+    if (!Comm_PopPoint(&pt))
+    {
+      return;                  /* 队列为空，保持当前位置 */
+    }
+
+    /* 激光状态属于"移动到该目标点"这一段，在段起点切换 */
+    if (pt.laser != 0U)
+    {
+      Laser_On();
+    }
+    else
+    {
+      Laser_Off();
+    }
+
+    SCurve_Start(&galvo_scurve, galvo_cur_x, galvo_cur_y, pt.x, pt.y);
+    galvo_plan_state = GALVO_MOVING;
+  }
+
+  /* 上一代还没铺满两个半区时先不动 stage（等 DMA 中断追上） */
   if ((galvo_a_gen != galvo_stage_gen) || (galvo_b_gen != galvo_stage_gen))
   {
-    galvo_drop++;               /* 该点丢弃，下次发新点会覆盖 */
+    return;
+  }
+
+  if (!SCurve_Next(&galvo_scurve, &x, &y))
+  {
+    galvo_plan_state = GALVO_IDLE;
     return;
   }
 
   galvo_build_stage(x, y, galvo_stage);
+  galvo_cur_x = x;
+  galvo_cur_y = y;
+  galvo_last_point_cycle = now;
+
+  if (SCurve_Done(&galvo_scurve))
+  {
+    galvo_plan_state = GALVO_IDLE;          /* 已到达目标点 */
+    galvo_last_arrive_cycle = now;
+  }
 
   __DMB();                     /* stage 写完，再发布代号 */
   galvo_stage_gen++;
@@ -295,11 +372,6 @@ void Galvo_Task(void)
 void Galvo_SetControlCode(uint8_t code)
 {
   galvo_ctrl = (uint8_t)(code & 0x7U);
-}
-
-uint32_t Galvo_GetDropCount(void)
-{
-  return galvo_drop;
 }
 
 uint32_t Galvo_GetDmaErrorCount(void)

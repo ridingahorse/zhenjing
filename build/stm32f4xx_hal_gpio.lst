@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -58,7 +58,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
   26:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   [..] 
   27:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   Subject to the specific hardware characteristics of each I/O port listed in the datasheet, each
   28:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   port bit of the General Purpose IO (GPIO) Ports, can be individually configured by software
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 2
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 2
 
 
   29:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   in several modes:
@@ -118,7 +118,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
   83:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****     (#) To get the level of a pin configured in input mode use HAL_GPIO_ReadPin().
   84:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****             
   85:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****     (#) To set/reset the level of a pin configured in output mode use 
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 3
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 3
 
 
   86:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****         HAL_GPIO_WritePin()/HAL_GPIO_TogglePin().
@@ -178,7 +178,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  140:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c **** /** @defgroup GPIO_Exported_Functions_Group1 Initialization and de-initialization functions
  141:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   *  @brief    Initialization and Configuration functions
  142:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   *
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 4
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 4
 
 
  143:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c **** @verbatim    
@@ -238,7 +238,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
   49              		.cfi_offset 5, -32
   50              		.cfi_offset 6, -28
   51              		.cfi_offset 7, -24
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 5
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 5
 
 
   52              		.cfi_offset 8, -20
@@ -298,7 +298,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  222:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****         assert_param(IS_GPIO_AF(GPIO_Init->Alternate));
  223:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****         /* Configure Alternate function mapped with the current IO */
  224:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****         temp = GPIOx->AFR[position >> 3U];
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 6
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 6
 
 
  225:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****         temp &= ~(0xFU << ((uint32_t)(position & 0x07U) * 4U)) ;
@@ -358,7 +358,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  182:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c **** 
   89              		.loc 1 182 15 is_stmt 0 view .LVU22
   90 0022 02EA0408 		and	r8, r2, r4
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 7
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 7
 
 
   91              	.LVL5:
@@ -418,7 +418,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  126              		.loc 1 213 14 is_stmt 0 view .LVU41
  127 004e 07EA050E 		and	lr, r7, r5
  128              	.LVL8:
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 8
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 8
 
 
  214:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****         GPIOx->PUPDR = temp;
@@ -478,7 +478,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  164              		.loc 1 241 9 is_stmt 1 view .LVU60
  165              	.LBB3:
  241:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c **** 
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 9
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 9
 
 
  166              		.loc 1 241 9 view .LVU61
@@ -538,7 +538,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  210 00ae 27D0     		beq	.L10
  211              		.loc 1 245 29 discriminator 1 view .LVU79
  212 00b0 06F58066 		add	r6, r6, #1024
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 10
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 10
 
 
  213 00b4 B042     		cmp	r0, r6
@@ -598,7 +598,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  260              	.LVL21:
  261              		.loc 1 251 9 is_stmt 1 view .LVU95
  252:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****         {
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 11
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 11
 
 
  253:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****           temp |= iocurrent;
@@ -658,7 +658,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  296              		.loc 1 265 9 is_stmt 1 view .LVU113
  297              		.loc 1 265 14 is_stmt 0 view .LVU114
  298 0128 7268     		ldr	r2, [r6, #4]
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 12
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 12
 
 
  299              	.LVL27:
@@ -718,7 +718,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  333              	.LVL32:
  278:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****         }
  334              		.loc 1 278 11 is_stmt 1 view .LVU132
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 13
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 13
 
 
  278:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****         }
@@ -778,7 +778,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  373              		.loc 1 196 14 view .LVU147
  374 0164 47EA0E07 		orr	r7, r7, lr
  375              	.LVL39:
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 14
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 14
 
 
  197:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c **** 
@@ -838,7 +838,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  410 0182 D9F80870 		ldr	r7, [r9, #8]
  411 0186 9740     		lsls	r7, r7, r2
  214:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****         GPIOx->PUPDR = temp;
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 15
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 15
 
 
  412              		.loc 1 214 14 view .LVU168
@@ -898,7 +898,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  448              		.loc 1 225 14 view .LVU186
  449 01b8 019E     		ldr	r6, [sp, #4]
  450 01ba 26EA0E0E 		bic	lr, r6, lr
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 16
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 16
 
 
  451              	.LVL48:
@@ -958,7 +958,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  491 01ea 89E7     		b	.L10
  492              	.LVL56:
  493              	.L39:
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 17
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 17
 
 
  245:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****         SYSCFG->EXTICR[position >> 2U] = temp;
@@ -1018,7 +1018,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  540              		.global	HAL_GPIO_DeInit
  541              		.syntax unified
  542              		.thumb
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 18
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 18
 
 
  543              		.thumb_func
@@ -1078,7 +1078,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  308:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****     ioposition = 0x01U << position;
  309:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****     /* Get the current IO position */
  310:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****     iocurrent = (GPIO_Pin) & ioposition;
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 19
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 19
 
 
  311:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c **** 
@@ -1138,7 +1138,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  308:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****     /* Get the current IO position */
  598              		.loc 1 308 16 is_stmt 0 view .LVU228
  599 001c 06FA03F2 		lsl	r2, r6, r3
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 20
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 20
 
 
  600              	.LVL66:
@@ -1198,7 +1198,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  636              		.loc 1 317 29 discriminator 1 view .LVU246
  637 0050 04F58064 		add	r4, r4, #1024
  638 0054 A042     		cmp	r0, r4
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 21
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 21
 
 
  639 0056 5BD0     		beq	.L60
@@ -1258,7 +1258,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  320:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****         EXTI->EMR &= ~((uint32_t)iocurrent);
  681              		.loc 1 320 19 view .LVU259
  682 009a 24EA0C04 		bic	r4, r4, ip
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 22
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 22
 
 
  683 009e 3C60     		str	r4, [r7]
@@ -1318,7 +1318,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  334:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c **** 
  721              		.loc 1 334 20 view .LVU277
  722 00cc 24EA0504 		bic	r4, r4, r5
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 23
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 23
 
 
  723 00d0 00EB8C0C 		add	ip, r0, ip, lsl #2
@@ -1378,7 +1378,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  305:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   {
  765              		.loc 1 305 31 discriminator 1 view .LVU298
  766 0108 88D1     		bne	.L55
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 24
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 24
 
 
  767              	.LVL76:
@@ -1438,7 +1438,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  817 0168 00140240 		.word	1073878016
  818 016c 00180240 		.word	1073879040
  819 0170 001C0240 		.word	1073880064
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 25
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 25
 
 
  820              		.cfi_endproc
@@ -1498,7 +1498,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  843 0000 0069     		ldr	r0, [r0, #16]
  844              	.LVL79:
  383:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   {
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 26
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 26
 
 
  384:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****     bitstatus = GPIO_PIN_SET;
@@ -1558,7 +1558,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  872              		@ link register save eliminated.
  412:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   /* Check the parameters */
  413:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   assert_param(IS_GPIO_PIN(GPIO_Pin));
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 27
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 27
 
 
  873              		.loc 1 413 3 view .LVU310
@@ -1618,7 +1618,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  436:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c **** 
  437:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   /* Check the parameters */
  438:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   assert_param(IS_GPIO_PIN(GPIO_Pin));
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 28
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 28
 
 
  907              		.loc 1 438 3 view .LVU320
@@ -1678,7 +1678,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  942              		@ link register save eliminated.
  460:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   __IO uint32_t tmp = GPIO_LCKR_LCKK;
  943              		.loc 1 460 3 view .LVU330
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 29
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 29
 
 
  459:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   __IO uint32_t tmp = GPIO_LCKR_LCKK;
@@ -1738,7 +1738,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  479:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****     return HAL_OK;
  480:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   }
  481:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   else
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 30
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 30
 
 
  482:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   {
@@ -1798,7 +1798,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  511:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****   /* NOTE: This function Should not be modified, when the callback is needed,
  512:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****            the HAL_GPIO_EXTI_Callback could be implemented in the user file
  513:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c ****    */
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 31
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 31
 
 
  514:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c **** }
@@ -1858,7 +1858,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  1052 0014 003C0140 		.word	1073822720
  1053              		.cfi_endproc
  1054              	.LFE140:
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 32
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 32
 
 
  1056              		.text
@@ -1869,29 +1869,29 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 1
  1061              		.file 5 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h"
  1062              		.file 6 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
  1063              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_gpio.h"
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s 			page 33
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s 			page 33
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 stm32f4xx_hal_gpio.c
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:21     .text.HAL_GPIO_Init:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:28     .text.HAL_GPIO_Init:00000000 HAL_GPIO_Init
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:525    .text.HAL_GPIO_Init:00000210 $d
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:538    .text.HAL_GPIO_DeInit:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:545    .text.HAL_GPIO_DeInit:00000000 HAL_GPIO_DeInit
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:812    .text.HAL_GPIO_DeInit:00000154 $d
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:824    .text.HAL_GPIO_ReadPin:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:831    .text.HAL_GPIO_ReadPin:00000000 HAL_GPIO_ReadPin
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:858    .text.HAL_GPIO_WritePin:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:865    .text.HAL_GPIO_WritePin:00000000 HAL_GPIO_WritePin
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:891    .text.HAL_GPIO_TogglePin:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:898    .text.HAL_GPIO_TogglePin:00000000 HAL_GPIO_TogglePin
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:928    .text.HAL_GPIO_LockPin:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:935    .text.HAL_GPIO_LockPin:00000000 HAL_GPIO_LockPin
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:990    .text.HAL_GPIO_EXTI_Callback:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:997    .text.HAL_GPIO_EXTI_Callback:00000000 HAL_GPIO_EXTI_Callback
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:1012   .text.HAL_GPIO_EXTI_IRQHandler:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:1019   .text.HAL_GPIO_EXTI_IRQHandler:00000000 HAL_GPIO_EXTI_IRQHandler
-C:\Users\Lenovo\AppData\Local\Temp\cc00otnN.s:1052   .text.HAL_GPIO_EXTI_IRQHandler:00000014 $d
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:21     .text.HAL_GPIO_Init:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:28     .text.HAL_GPIO_Init:00000000 HAL_GPIO_Init
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:525    .text.HAL_GPIO_Init:00000210 $d
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:538    .text.HAL_GPIO_DeInit:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:545    .text.HAL_GPIO_DeInit:00000000 HAL_GPIO_DeInit
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:812    .text.HAL_GPIO_DeInit:00000154 $d
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:824    .text.HAL_GPIO_ReadPin:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:831    .text.HAL_GPIO_ReadPin:00000000 HAL_GPIO_ReadPin
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:858    .text.HAL_GPIO_WritePin:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:865    .text.HAL_GPIO_WritePin:00000000 HAL_GPIO_WritePin
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:891    .text.HAL_GPIO_TogglePin:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:898    .text.HAL_GPIO_TogglePin:00000000 HAL_GPIO_TogglePin
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:928    .text.HAL_GPIO_LockPin:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:935    .text.HAL_GPIO_LockPin:00000000 HAL_GPIO_LockPin
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:990    .text.HAL_GPIO_EXTI_Callback:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:997    .text.HAL_GPIO_EXTI_Callback:00000000 HAL_GPIO_EXTI_Callback
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:1012   .text.HAL_GPIO_EXTI_IRQHandler:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:1019   .text.HAL_GPIO_EXTI_IRQHandler:00000000 HAL_GPIO_EXTI_IRQHandler
+C:\Users\Lenovo\AppData\Local\Temp\cc7C0tkm.s:1052   .text.HAL_GPIO_EXTI_IRQHandler:00000014 $d
 
 NO UNDEFINED SYMBOLS

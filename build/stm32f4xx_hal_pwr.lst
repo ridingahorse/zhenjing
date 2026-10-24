@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -58,7 +58,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
   27:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   * @{
   28:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   */
   29:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c **** 
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 2
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 2
 
 
   30:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c **** /** @defgroup PWR PWR
@@ -118,7 +118,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
   84:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   */
   85:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c **** 
   86:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c **** /**
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 3
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 3
 
 
   87:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   * @brief Deinitializes the HAL PWR peripheral registers to their default reset values.
@@ -178,7 +178,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
   63              		.loc 1 109 1 is_stmt 1 view -0
   64              		.cfi_startproc
   65              		@ args = 0, pretend = 0, frame = 8
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 4
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 4
 
 
   66              		@ frame_needed = 0, uses_anonymous_args = 0
@@ -238,7 +238,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  116:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c **** /**
  117:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   * @brief Disables access to the backup domain (RTC registers, RTC 
  118:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   *         backup data registers and backup SRAM).
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 5
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 5
 
 
  119:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   * @note If the HSE divided by 2, 3, ..31 is used as the RTC clock, the 
@@ -298,7 +298,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  148 0014 00000E42 		.word	1108213760
  149 0018 00700040 		.word	1073770496
  150              		.cfi_endproc
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 6
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 6
 
 
  151              	.LFE136:
@@ -358,7 +358,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  178:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****    *** Sleep mode ***
  179:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****    ==================
  180:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****     [..]
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 7
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 7
 
 
  181:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****       (+) Entry:
@@ -418,7 +418,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  235:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****       
  236:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****       (++) Entry:
  237:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****         (+++) The Standby mode is entered using the HAL_PWR_EnterSTANDBYMode() function.
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 8
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 8
 
 
  238:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****       (++) Exit:
@@ -478,7 +478,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  283:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   
  284:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   /* Clear any previous config. Keep it clear if no event or IT mode is selected */
  285:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   __HAL_PWR_PVD_EXTI_DISABLE_EVENT();
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 9
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 9
 
 
  173              		.loc 1 285 3 is_stmt 0 view .LVU34
@@ -538,7 +538,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  296:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   /* Configure event mode */
  297:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   if((sConfigPVD->Mode & PVD_MODE_EVT) == PVD_MODE_EVT)
  214              		.loc 1 297 3 view .LVU46
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 10
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 10
 
 
  215              		.loc 1 297 5 is_stmt 0 view .LVU47
@@ -598,7 +598,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  254              		.cfi_endproc
  255              	.LFE137:
  257              		.section	.text.HAL_PWR_EnablePVD,"ax",%progbits
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 11
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 11
 
 
  258              		.align	1
@@ -658,7 +658,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  299              		@ frame_needed = 0, uses_anonymous_args = 0
  300              		@ link register save eliminated.
  329:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   *(__IO uint32_t *) CR_PVDE_BB = (uint32_t)DISABLE;
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 12
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 12
 
 
  301              		.loc 1 329 3 view .LVU62
@@ -718,7 +718,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  338 0008 7047     		bx	lr
  339              	.L41:
  340 000a 00BF     		.align	2
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 13
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 13
 
 
  341              	.L40:
@@ -778,7 +778,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  380              		.global	HAL_PWR_EnterSLEEPMode
  381              		.syntax unified
  382              		.thumb
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 14
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 14
 
 
  383              		.thumb_func
@@ -838,7 +838,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  400 0004 0129     		cmp	r1, #1
  401:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c **** 
  401              		.loc 1 401 3 view .LVU79
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 15
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 15
 
 
  402 0006 23F00403 		bic	r3, r3, #4
@@ -898,7 +898,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  438              		.thumb
  439              		.syntax unified
  440 001c 7047     		bx	lr
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 16
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 16
 
 
  441              	.L54:
@@ -958,7 +958,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  466              		.loc 1 452 3 view .LVU92
  446:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   /* Check the parameters */
  467              		.loc 1 446 1 is_stmt 0 view .LVU93
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 17
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 17
 
 
  468 0000 10B4     		push	{r4}
@@ -1018,7 +1018,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  503              	@ 0 "" 2
  504              		.thumb
  505              		.syntax unified
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 18
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 18
 
 
  506              	.L58:
@@ -1078,7 +1078,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  478:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c **** /**
  479:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   * @brief Enters Standby mode.
  480:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   * @note In Standby mode, all I/O pins are high impedance except for:
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 19
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 19
 
 
  481:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   *          - Reset pad (still available) 
@@ -1138,7 +1138,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  583              		.cfi_endproc
  584              	.LFE144:
  586              		.section	.text.HAL_PWR_PVDCallback,"ax",%progbits
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 20
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 20
 
 
  587              		.align	1
@@ -1198,7 +1198,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  615              	.LFB145:
  510:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   /* Check PWR Exti flag */
  616              		.loc 1 510 1 view -0
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 21
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 21
 
 
  617              		.cfi_startproc
@@ -1258,7 +1258,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  536:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   *       re-enters SLEEP mode when an interruption handling is over.
  537:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   *       Setting this bit is useful when the processor is expected to run only on
  538:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   *       interruptions handling.         
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 22
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 22
 
 
  539:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   * @retval None
@@ -1318,7 +1318,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  699 0008 1361     		str	r3, [r2, #16]
  557:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c **** }
  700              		.loc 1 557 1 is_stmt 0 view .LVU135
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 23
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 23
 
 
  701 000a 7047     		bx	lr
@@ -1378,7 +1378,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  747              	.LFB150:
  570:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c **** 
  571:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c **** /**
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 24
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 24
 
 
  572:Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c ****   * @brief Disables CORTEX M4 SEVONPEND bit. 
@@ -1417,60 +1417,60 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 1
  772              		.file 5 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h"
  773              		.file 6 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h"
  774              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr.h"
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s 			page 25
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s 			page 25
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 stm32f4xx_hal_pwr.c
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:21     .text.HAL_PWR_DeInit:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:28     .text.HAL_PWR_DeInit:00000000 HAL_PWR_DeInit
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:49     .text.HAL_PWR_DeInit:00000014 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:54     .text.HAL_PWR_EnableBkUpAccess:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:61     .text.HAL_PWR_EnableBkUpAccess:00000000 HAL_PWR_EnableBkUpAccess
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:98     .text.HAL_PWR_EnableBkUpAccess:00000014 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:104    .text.HAL_PWR_DisableBkUpAccess:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:111    .text.HAL_PWR_DisableBkUpAccess:00000000 HAL_PWR_DisableBkUpAccess
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:148    .text.HAL_PWR_DisableBkUpAccess:00000014 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:154    .text.HAL_PWR_ConfigPVD:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:161    .text.HAL_PWR_ConfigPVD:00000000 HAL_PWR_ConfigPVD
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:252    .text.HAL_PWR_ConfigPVD:00000070 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:258    .text.HAL_PWR_EnablePVD:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:265    .text.HAL_PWR_EnablePVD:00000000 HAL_PWR_EnablePVD
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:282    .text.HAL_PWR_EnablePVD:00000008 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:287    .text.HAL_PWR_DisablePVD:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:294    .text.HAL_PWR_DisablePVD:00000000 HAL_PWR_DisablePVD
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:311    .text.HAL_PWR_DisablePVD:00000008 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:316    .text.HAL_PWR_EnableWakeUpPin:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:323    .text.HAL_PWR_EnableWakeUpPin:00000000 HAL_PWR_EnableWakeUpPin
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:342    .text.HAL_PWR_EnableWakeUpPin:0000000c $d
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:347    .text.HAL_PWR_DisableWakeUpPin:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:354    .text.HAL_PWR_DisableWakeUpPin:00000000 HAL_PWR_DisableWakeUpPin
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:373    .text.HAL_PWR_DisableWakeUpPin:0000000c $d
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:378    .text.HAL_PWR_EnterSLEEPMode:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:385    .text.HAL_PWR_EnterSLEEPMode:00000000 HAL_PWR_EnterSLEEPMode
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:444    .text.HAL_PWR_EnterSLEEPMode:00000020 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:449    .text.HAL_PWR_EnterSTOPMode:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:456    .text.HAL_PWR_EnterSTOPMode:00000000 HAL_PWR_EnterSTOPMode
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:537    .text.HAL_PWR_EnterSTOPMode:0000003c $d
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:543    .text.HAL_PWR_EnterSTANDBYMode:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:550    .text.HAL_PWR_EnterSTANDBYMode:00000000 HAL_PWR_EnterSTANDBYMode
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:581    .text.HAL_PWR_EnterSTANDBYMode:00000018 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:587    .text.HAL_PWR_PVDCallback:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:594    .text.HAL_PWR_PVDCallback:00000000 HAL_PWR_PVDCallback
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:607    .text.HAL_PWR_PVD_IRQHandler:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:614    .text.HAL_PWR_PVD_IRQHandler:00000000 HAL_PWR_PVD_IRQHandler
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:647    .text.HAL_PWR_PVD_IRQHandler:00000018 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:652    .text.HAL_PWR_EnableSleepOnExit:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:659    .text.HAL_PWR_EnableSleepOnExit:00000000 HAL_PWR_EnableSleepOnExit
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:676    .text.HAL_PWR_EnableSleepOnExit:0000000c $d
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:681    .text.HAL_PWR_DisableSleepOnExit:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:688    .text.HAL_PWR_DisableSleepOnExit:00000000 HAL_PWR_DisableSleepOnExit
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:705    .text.HAL_PWR_DisableSleepOnExit:0000000c $d
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:710    .text.HAL_PWR_EnableSEVOnPend:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:717    .text.HAL_PWR_EnableSEVOnPend:00000000 HAL_PWR_EnableSEVOnPend
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:734    .text.HAL_PWR_EnableSEVOnPend:0000000c $d
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:739    .text.HAL_PWR_DisableSEVOnPend:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:746    .text.HAL_PWR_DisableSEVOnPend:00000000 HAL_PWR_DisableSEVOnPend
-C:\Users\Lenovo\AppData\Local\Temp\ccjXkBcr.s:763    .text.HAL_PWR_DisableSEVOnPend:0000000c $d
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:21     .text.HAL_PWR_DeInit:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:28     .text.HAL_PWR_DeInit:00000000 HAL_PWR_DeInit
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:49     .text.HAL_PWR_DeInit:00000014 $d
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:54     .text.HAL_PWR_EnableBkUpAccess:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:61     .text.HAL_PWR_EnableBkUpAccess:00000000 HAL_PWR_EnableBkUpAccess
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:98     .text.HAL_PWR_EnableBkUpAccess:00000014 $d
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:104    .text.HAL_PWR_DisableBkUpAccess:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:111    .text.HAL_PWR_DisableBkUpAccess:00000000 HAL_PWR_DisableBkUpAccess
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:148    .text.HAL_PWR_DisableBkUpAccess:00000014 $d
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:154    .text.HAL_PWR_ConfigPVD:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:161    .text.HAL_PWR_ConfigPVD:00000000 HAL_PWR_ConfigPVD
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:252    .text.HAL_PWR_ConfigPVD:00000070 $d
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:258    .text.HAL_PWR_EnablePVD:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:265    .text.HAL_PWR_EnablePVD:00000000 HAL_PWR_EnablePVD
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:282    .text.HAL_PWR_EnablePVD:00000008 $d
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:287    .text.HAL_PWR_DisablePVD:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:294    .text.HAL_PWR_DisablePVD:00000000 HAL_PWR_DisablePVD
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:311    .text.HAL_PWR_DisablePVD:00000008 $d
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:316    .text.HAL_PWR_EnableWakeUpPin:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:323    .text.HAL_PWR_EnableWakeUpPin:00000000 HAL_PWR_EnableWakeUpPin
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:342    .text.HAL_PWR_EnableWakeUpPin:0000000c $d
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:347    .text.HAL_PWR_DisableWakeUpPin:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:354    .text.HAL_PWR_DisableWakeUpPin:00000000 HAL_PWR_DisableWakeUpPin
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:373    .text.HAL_PWR_DisableWakeUpPin:0000000c $d
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:378    .text.HAL_PWR_EnterSLEEPMode:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:385    .text.HAL_PWR_EnterSLEEPMode:00000000 HAL_PWR_EnterSLEEPMode
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:444    .text.HAL_PWR_EnterSLEEPMode:00000020 $d
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:449    .text.HAL_PWR_EnterSTOPMode:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:456    .text.HAL_PWR_EnterSTOPMode:00000000 HAL_PWR_EnterSTOPMode
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:537    .text.HAL_PWR_EnterSTOPMode:0000003c $d
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:543    .text.HAL_PWR_EnterSTANDBYMode:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:550    .text.HAL_PWR_EnterSTANDBYMode:00000000 HAL_PWR_EnterSTANDBYMode
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:581    .text.HAL_PWR_EnterSTANDBYMode:00000018 $d
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:587    .text.HAL_PWR_PVDCallback:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:594    .text.HAL_PWR_PVDCallback:00000000 HAL_PWR_PVDCallback
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:607    .text.HAL_PWR_PVD_IRQHandler:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:614    .text.HAL_PWR_PVD_IRQHandler:00000000 HAL_PWR_PVD_IRQHandler
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:647    .text.HAL_PWR_PVD_IRQHandler:00000018 $d
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:652    .text.HAL_PWR_EnableSleepOnExit:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:659    .text.HAL_PWR_EnableSleepOnExit:00000000 HAL_PWR_EnableSleepOnExit
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:676    .text.HAL_PWR_EnableSleepOnExit:0000000c $d
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:681    .text.HAL_PWR_DisableSleepOnExit:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:688    .text.HAL_PWR_DisableSleepOnExit:00000000 HAL_PWR_DisableSleepOnExit
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:705    .text.HAL_PWR_DisableSleepOnExit:0000000c $d
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:710    .text.HAL_PWR_EnableSEVOnPend:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:717    .text.HAL_PWR_EnableSEVOnPend:00000000 HAL_PWR_EnableSEVOnPend
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:734    .text.HAL_PWR_EnableSEVOnPend:0000000c $d
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:739    .text.HAL_PWR_DisableSEVOnPend:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:746    .text.HAL_PWR_DisableSEVOnPend:00000000 HAL_PWR_DisableSEVOnPend
+C:\Users\Lenovo\AppData\Local\Temp\cclcpGuR.s:763    .text.HAL_PWR_DisableSEVOnPend:0000000c $d
 
 NO UNDEFINED SYMBOLS

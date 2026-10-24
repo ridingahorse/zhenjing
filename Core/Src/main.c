@@ -26,6 +26,7 @@
 /* USER CODE BEGIN Includes */
 #include "comm.h"
 #include "galvo.h"
+#include "laser.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -94,6 +95,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   /* DWT 周期计数：调试计时用，需在收发启动前打开 */
   Galvo_DwtInit();
+
+  Laser_Init();
 
   /* 上位机通信：目前是 USART1，接口与介质无关 */
   Comm_Init();

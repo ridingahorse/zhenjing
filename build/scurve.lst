@@ -1,0 +1,378 @@
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmzoOKk.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 2
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"scurve.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.file 1 "lib/scurve/scurve.c"
+  20              		.section	.text.SCurve_Start,"ax",%progbits
+  21              		.align	1
+  22              		.p2align 2,,3
+  23              		.global	SCurve_Start
+  24              		.syntax unified
+  25              		.thumb
+  26              		.thumb_func
+  28              	SCurve_Start:
+  29              	.LVL0:
+  30              	.LFB0:
+   1:lib/scurve/scurve.c **** /**
+   2:lib/scurve/scurve.c ****   ******************************************************************************
+   3:lib/scurve/scurve.c ****   * @file    scurve.c
+   4:lib/scurve/scurve.c ****   * @brief   S 曲线轨迹规划实现
+   5:lib/scurve/scurve.c ****   ******************************************************************************
+   6:lib/scurve/scurve.c ****   */
+   7:lib/scurve/scurve.c **** 
+   8:lib/scurve/scurve.c **** #include "scurve.h"
+   9:lib/scurve/scurve.c **** 
+  10:lib/scurve/scurve.c **** #include <math.h>
+  11:lib/scurve/scurve.c **** 
+  12:lib/scurve/scurve.c **** void SCurve_Start(SCurve *c, int16_t sx, int16_t sy, int16_t tx, int16_t ty)
+  13:lib/scurve/scurve.c **** {
+  31              		.loc 1 13 1 view -0
+  32              		.cfi_startproc
+  33              		@ args = 4, pretend = 0, frame = 0
+  34              		@ frame_needed = 0, uses_anonymous_args = 0
+  35              		@ link register save eliminated.
+  14:lib/scurve/scurve.c ****   if (c == NULL)
+  36              		.loc 1 14 3 view .LVU1
+  13:lib/scurve/scurve.c ****   if (c == NULL)
+  37              		.loc 1 13 1 is_stmt 0 view .LVU2
+  38 0000 10B4     		push	{r4}
+  39              	.LCFI0:
+  40              		.cfi_def_cfa_offset 4
+  41              		.cfi_offset 4, -4
+  13:lib/scurve/scurve.c ****   if (c == NULL)
+  42              		.loc 1 13 1 view .LVU3
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmzoOKk.s 			page 2
+
+
+  43 0002 BDF90440 		ldrsh	r4, [sp, #4]
+  44              		.loc 1 14 6 view .LVU4
+  45 0006 28B1     		cbz	r0, .L1
+  15:lib/scurve/scurve.c ****   {
+  16:lib/scurve/scurve.c ****     return;
+  17:lib/scurve/scurve.c ****   }
+  18:lib/scurve/scurve.c **** 
+  19:lib/scurve/scurve.c ****   c->sx = sx;
+  46              		.loc 1 19 3 is_stmt 1 view .LVU5
+  47              		.loc 1 19 9 is_stmt 0 view .LVU6
+  48 0008 0160     		str	r1, [r0]
+  20:lib/scurve/scurve.c ****   c->sy = sy;
+  49              		.loc 1 20 3 is_stmt 1 view .LVU7
+  21:lib/scurve/scurve.c ****   c->tx = tx;
+  22:lib/scurve/scurve.c ****   c->ty = ty;
+  23:lib/scurve/scurve.c ****   c->step = 0U;
+  50              		.loc 1 23 11 is_stmt 0 view .LVU8
+  51 000a 0021     		movs	r1, #0
+  52              	.LVL1:
+  21:lib/scurve/scurve.c ****   c->tx = tx;
+  53              		.loc 1 21 9 view .LVU9
+  54 000c C0E90123 		strd	r2, r3, [r0, #4]
+  22:lib/scurve/scurve.c ****   c->step = 0U;
+  55              		.loc 1 22 3 is_stmt 1 view .LVU10
+  56              		.loc 1 23 11 is_stmt 0 view .LVU11
+  57 0010 C0E90341 		strd	r4, r1, [r0, #12]
+  58              	.LVL2:
+  59              	.L1:
+  24:lib/scurve/scurve.c **** }
+  60              		.loc 1 24 1 view .LVU12
+  61 0014 5DF8044B 		ldr	r4, [sp], #4
+  62              	.LVL3:
+  63              		.loc 1 24 1 view .LVU13
+  64 0018 7047     		bx	lr
+  65              		.cfi_endproc
+  66              	.LFE0:
+  68 001a 00BF     		.section	.text.SCurve_Next,"ax",%progbits
+  69              		.align	1
+  70              		.p2align 2,,3
+  71              		.global	SCurve_Next
+  72              		.syntax unified
+  73              		.thumb
+  74              		.thumb_func
+  76              	SCurve_Next:
+  77              	.LVL4:
+  78              	.LFB1:
+  25:lib/scurve/scurve.c **** 
+  26:lib/scurve/scurve.c **** bool SCurve_Next(SCurve *c, int16_t *x, int16_t *y)
+  27:lib/scurve/scurve.c **** {
+  79              		.loc 1 27 1 is_stmt 1 view -0
+  80              		.cfi_startproc
+  81              		@ args = 0, pretend = 0, frame = 0
+  82              		@ frame_needed = 0, uses_anonymous_args = 0
+  28:lib/scurve/scurve.c ****   float u, s;
+  83              		.loc 1 28 3 view .LVU15
+  29:lib/scurve/scurve.c **** 
+  30:lib/scurve/scurve.c ****   if ((c == NULL) || (x == NULL) || (y == NULL))
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmzoOKk.s 			page 3
+
+
+  84              		.loc 1 30 3 view .LVU16
+  27:lib/scurve/scurve.c ****   float u, s;
+  85              		.loc 1 27 1 is_stmt 0 view .LVU17
+  86 0000 70B5     		push	{r4, r5, r6, lr}
+  87              	.LCFI1:
+  88              		.cfi_def_cfa_offset 16
+  89              		.cfi_offset 4, -16
+  90              		.cfi_offset 5, -12
+  91              		.cfi_offset 6, -8
+  92              		.cfi_offset 14, -4
+  93              		.loc 1 30 6 view .LVU18
+  94 0002 0446     		mov	r4, r0
+  27:lib/scurve/scurve.c ****   float u, s;
+  95              		.loc 1 27 1 view .LVU19
+  96 0004 2DED028B 		vpush.64	{d8}
+  97              	.LCFI2:
+  98              		.cfi_def_cfa_offset 24
+  99              		.cfi_offset 80, -24
+ 100              		.cfi_offset 81, -20
+ 101              		.loc 1 30 6 view .LVU20
+ 102 0008 30B1     		cbz	r0, .L13
+ 103 000a 0D46     		mov	r5, r1
+ 104              		.loc 1 30 19 discriminator 1 view .LVU21
+ 105 000c 21B1     		cbz	r1, .L13
+ 106 000e 1646     		mov	r6, r2
+ 107              		.loc 1 30 34 discriminator 2 view .LVU22
+ 108 0010 12B1     		cbz	r2, .L13
+  31:lib/scurve/scurve.c ****   {
+  32:lib/scurve/scurve.c ****     return false;
+  33:lib/scurve/scurve.c ****   }
+  34:lib/scurve/scurve.c **** 
+  35:lib/scurve/scurve.c ****   if (c->step >= SCURVE_POINTS)
+ 109              		.loc 1 35 3 is_stmt 1 view .LVU23
+ 110              		.loc 1 35 8 is_stmt 0 view .LVU24
+ 111 0012 0369     		ldr	r3, [r0, #16]
+ 112              		.loc 1 35 6 view .LVU25
+ 113 0014 062B     		cmp	r3, #6
+ 114 0016 03D9     		bls	.L15
+ 115              	.L13:
+  36:lib/scurve/scurve.c ****   {
+  37:lib/scurve/scurve.c ****     return false;
+  38:lib/scurve/scurve.c ****   }
+  39:lib/scurve/scurve.c **** 
+  40:lib/scurve/scurve.c ****   c->step++;
+  41:lib/scurve/scurve.c **** 
+  42:lib/scurve/scurve.c ****   /* u: 0..1，第 SCURVE_POINTS 个点恰好等于目标点 */
+  43:lib/scurve/scurve.c ****   u = (float)c->step / (float)SCURVE_POINTS;
+  44:lib/scurve/scurve.c ****   s = u * u * (3.0f - 2.0f * u);
+  45:lib/scurve/scurve.c **** 
+  46:lib/scurve/scurve.c ****   *x = (int16_t)lroundf((float)c->sx + (float)(c->tx - c->sx) * s);
+  47:lib/scurve/scurve.c ****   *y = (int16_t)lroundf((float)c->sy + (float)(c->ty - c->sy) * s);
+  48:lib/scurve/scurve.c ****   return true;
+  49:lib/scurve/scurve.c **** }
+ 116              		.loc 1 49 1 view .LVU26
+ 117 0018 BDEC028B 		vldm	sp!, {d8}
+ 118              	.LCFI3:
+ 119              		.cfi_remember_state
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmzoOKk.s 			page 4
+
+
+ 120              		.cfi_restore 80
+ 121              		.cfi_restore 81
+ 122              		.cfi_def_cfa_offset 16
+  32:lib/scurve/scurve.c ****   }
+ 123              		.loc 1 32 12 view .LVU27
+ 124 001c 0020     		movs	r0, #0
+ 125              	.LVL5:
+ 126              		.loc 1 49 1 view .LVU28
+ 127 001e 70BD     		pop	{r4, r5, r6, pc}
+ 128              	.LVL6:
+ 129              	.L15:
+ 130              	.LCFI4:
+ 131              		.cfi_restore_state
+  40:lib/scurve/scurve.c **** 
+ 132              		.loc 1 40 3 is_stmt 1 view .LVU29
+  40:lib/scurve/scurve.c **** 
+ 133              		.loc 1 40 10 is_stmt 0 view .LVU30
+ 134 0020 0133     		adds	r3, r3, #1
+  43:lib/scurve/scurve.c ****   s = u * u * (3.0f - 2.0f * u);
+ 135              		.loc 1 43 7 view .LVU31
+ 136 0022 07EE903A 		vmov	s15, r3	@ int
+ 137 0026 F8EEE76A 		vcvt.f32.s32	s13, s15
+  43:lib/scurve/scurve.c ****   s = u * u * (3.0f - 2.0f * u);
+ 138              		.loc 1 43 5 view .LVU32
+ 139 002a B1EE0C7A 		vmov.f32	s14, #7.0e+0
+ 140 002e C6EE877A 		vdiv.f32	s15, s13, s14
+  40:lib/scurve/scurve.c **** 
+ 141              		.loc 1 40 10 view .LVU33
+ 142 0032 0361     		str	r3, [r0, #16]
+  43:lib/scurve/scurve.c ****   s = u * u * (3.0f - 2.0f * u);
+ 143              		.loc 1 43 3 is_stmt 1 view .LVU34
+ 144              	.LVL7:
+  44:lib/scurve/scurve.c **** 
+ 145              		.loc 1 44 3 view .LVU35
+  46:lib/scurve/scurve.c ****   *y = (int16_t)lroundf((float)c->sy + (float)(c->ty - c->sy) * s);
+ 146              		.loc 1 46 54 is_stmt 0 view .LVU36
+ 147 0034 8368     		ldr	r3, [r0, #8]
+  46:lib/scurve/scurve.c ****   *y = (int16_t)lroundf((float)c->sy + (float)(c->ty - c->sy) * s);
+ 148              		.loc 1 46 25 view .LVU37
+ 149 0036 90ED007A 		vldr.32	s14, [r0]	@ int
+  44:lib/scurve/scurve.c **** 
+ 150              		.loc 1 44 21 view .LVU38
+ 151 003a B0EE006A 		vmov.f32	s12, #2.0e+0
+  46:lib/scurve/scurve.c ****   *y = (int16_t)lroundf((float)c->sy + (float)(c->ty - c->sy) * s);
+ 152              		.loc 1 46 54 view .LVU39
+ 153 003e 17EE102A 		vmov	r2, s14	@ int
+ 154              	.LVL8:
+  44:lib/scurve/scurve.c **** 
+ 155              		.loc 1 44 21 view .LVU40
+ 156 0042 F0EE086A 		vmov.f32	s13, #3.0e+0
+ 157 0046 E7EEC66A 		vfms.f32	s13, s15, s12
+  46:lib/scurve/scurve.c ****   *y = (int16_t)lroundf((float)c->sy + (float)(c->ty - c->sy) * s);
+ 158              		.loc 1 46 54 view .LVU41
+ 159 004a 9B1A     		subs	r3, r3, r2
+  44:lib/scurve/scurve.c **** 
+ 160              		.loc 1 44 9 view .LVU42
+ 161 004c 67EEA77A 		vmul.f32	s15, s15, s15
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmzoOKk.s 			page 5
+
+
+ 162              	.LVL9:
+  46:lib/scurve/scurve.c ****   *y = (int16_t)lroundf((float)c->sy + (float)(c->ty - c->sy) * s);
+ 163              		.loc 1 46 25 view .LVU43
+ 164 0050 B8EEC70A 		vcvt.f32.s32	s0, s14
+  46:lib/scurve/scurve.c ****   *y = (int16_t)lroundf((float)c->sy + (float)(c->ty - c->sy) * s);
+ 165              		.loc 1 46 40 view .LVU44
+ 166 0054 07EE103A 		vmov	s14, r3	@ int
+  44:lib/scurve/scurve.c **** 
+ 167              		.loc 1 44 5 view .LVU45
+ 168 0058 27EEA68A 		vmul.f32	s16, s15, s13
+ 169              	.LVL10:
+  46:lib/scurve/scurve.c ****   *y = (int16_t)lroundf((float)c->sy + (float)(c->ty - c->sy) * s);
+ 170              		.loc 1 46 3 is_stmt 1 view .LVU46
+  46:lib/scurve/scurve.c ****   *y = (int16_t)lroundf((float)c->sy + (float)(c->ty - c->sy) * s);
+ 171              		.loc 1 46 40 is_stmt 0 view .LVU47
+ 172 005c B8EEC77A 		vcvt.f32.s32	s14, s14
+  46:lib/scurve/scurve.c ****   *y = (int16_t)lroundf((float)c->sy + (float)(c->ty - c->sy) * s);
+ 173              		.loc 1 46 17 view .LVU48
+ 174 0060 A7EE080A 		vfma.f32	s0, s14, s16
+ 175 0064 FFF7FEFF 		bl	lroundf
+ 176              	.LVL11:
+  47:lib/scurve/scurve.c ****   return true;
+ 177              		.loc 1 47 33 view .LVU49
+ 178 0068 6268     		ldr	r2, [r4, #4]
+  47:lib/scurve/scurve.c ****   return true;
+ 179              		.loc 1 47 54 view .LVU50
+ 180 006a E368     		ldr	r3, [r4, #12]
+  46:lib/scurve/scurve.c ****   *y = (int16_t)lroundf((float)c->sy + (float)(c->ty - c->sy) * s);
+ 181              		.loc 1 46 8 discriminator 1 view .LVU51
+ 182 006c 2880     		strh	r0, [r5]	@ movhi
+  47:lib/scurve/scurve.c ****   return true;
+ 183              		.loc 1 47 3 is_stmt 1 view .LVU52
+  47:lib/scurve/scurve.c ****   return true;
+ 184              		.loc 1 47 25 is_stmt 0 view .LVU53
+ 185 006e 07EE902A 		vmov	s15, r2	@ int
+  47:lib/scurve/scurve.c ****   return true;
+ 186              		.loc 1 47 54 view .LVU54
+ 187 0072 9B1A     		subs	r3, r3, r2
+  47:lib/scurve/scurve.c ****   return true;
+ 188              		.loc 1 47 25 view .LVU55
+ 189 0074 B8EEE70A 		vcvt.f32.s32	s0, s15
+  47:lib/scurve/scurve.c ****   return true;
+ 190              		.loc 1 47 40 view .LVU56
+ 191 0078 07EE903A 		vmov	s15, r3	@ int
+ 192 007c F8EEE77A 		vcvt.f32.s32	s15, s15
+  47:lib/scurve/scurve.c ****   return true;
+ 193              		.loc 1 47 17 view .LVU57
+ 194 0080 A7EE880A 		vfma.f32	s0, s15, s16
+ 195 0084 FFF7FEFF 		bl	lroundf
+ 196              	.LVL12:
+ 197              		.loc 1 49 1 view .LVU58
+ 198 0088 BDEC028B 		vldm	sp!, {d8}
+ 199              	.LCFI5:
+ 200              		.cfi_restore 80
+ 201              		.cfi_restore 81
+ 202              		.cfi_def_cfa_offset 16
+ 203              	.LVL13:
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmzoOKk.s 			page 6
+
+
+  47:lib/scurve/scurve.c ****   return true;
+ 204              		.loc 1 47 17 view .LVU59
+ 205 008c 0346     		mov	r3, r0
+  47:lib/scurve/scurve.c ****   return true;
+ 206              		.loc 1 47 8 discriminator 1 view .LVU60
+ 207 008e 3380     		strh	r3, [r6]	@ movhi
+  48:lib/scurve/scurve.c **** }
+ 208              		.loc 1 48 3 is_stmt 1 view .LVU61
+  48:lib/scurve/scurve.c **** }
+ 209              		.loc 1 48 10 is_stmt 0 view .LVU62
+ 210 0090 0120     		movs	r0, #1
+ 211              		.loc 1 49 1 view .LVU63
+ 212 0092 70BD     		pop	{r4, r5, r6, pc}
+ 213              		.loc 1 49 1 view .LVU64
+ 214              		.cfi_endproc
+ 215              	.LFE1:
+ 217              		.section	.text.SCurve_Done,"ax",%progbits
+ 218              		.align	1
+ 219              		.p2align 2,,3
+ 220              		.global	SCurve_Done
+ 221              		.syntax unified
+ 222              		.thumb
+ 223              		.thumb_func
+ 225              	SCurve_Done:
+ 226              	.LVL14:
+ 227              	.LFB2:
+  50:lib/scurve/scurve.c **** 
+  51:lib/scurve/scurve.c **** bool SCurve_Done(const SCurve *c)
+  52:lib/scurve/scurve.c **** {
+ 228              		.loc 1 52 1 is_stmt 1 view -0
+ 229              		.cfi_startproc
+ 230              		@ args = 0, pretend = 0, frame = 0
+ 231              		@ frame_needed = 0, uses_anonymous_args = 0
+ 232              		@ link register save eliminated.
+  53:lib/scurve/scurve.c ****   return (c != NULL) && (c->step >= SCURVE_POINTS);
+ 233              		.loc 1 53 3 view .LVU66
+ 234              		.loc 1 53 22 is_stmt 0 view .LVU67
+ 235 0000 20B1     		cbz	r0, .L17
+ 236              		.loc 1 53 22 discriminator 1 view .LVU68
+ 237 0002 0069     		ldr	r0, [r0, #16]
+ 238              	.LVL15:
+ 239              		.loc 1 53 22 discriminator 1 view .LVU69
+ 240 0004 0628     		cmp	r0, #6
+ 241 0006 94BF     		ite	ls
+ 242 0008 0020     		movls	r0, #0
+ 243 000a 0120     		movhi	r0, #1
+ 244              	.L17:
+  54:lib/scurve/scurve.c **** }
+ 245              		.loc 1 54 1 view .LVU70
+ 246 000c 7047     		bx	lr
+ 247              		.cfi_endproc
+ 248              	.LFE2:
+ 250 000e 00BF     		.text
+ 251              	.Letext0:
+ 252              		.file 2 "D:\\vscode\\stm32cubecltv122\\stm32cubeclt_1.22.0-Win-x86_64.exe\\anzhuang\\STM32CubeCLT_
+ 253              		.file 3 "D:\\vscode\\stm32cubecltv122\\stm32cubeclt_1.22.0-Win-x86_64.exe\\anzhuang\\STM32CubeCLT_
+ 254              		.file 4 "lib/scurve/scurve.h"
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmzoOKk.s 			page 7
+
+
+ 255              		.file 5 "D:\\vscode\\stm32cubecltv122\\stm32cubeclt_1.22.0-Win-x86_64.exe\\anzhuang\\STM32CubeCLT_
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccmzoOKk.s 			page 8
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 scurve.c
+C:\Users\Lenovo\AppData\Local\Temp\ccmzoOKk.s:21     .text.SCurve_Start:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\ccmzoOKk.s:28     .text.SCurve_Start:00000000 SCurve_Start
+C:\Users\Lenovo\AppData\Local\Temp\ccmzoOKk.s:69     .text.SCurve_Next:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\ccmzoOKk.s:76     .text.SCurve_Next:00000000 SCurve_Next
+C:\Users\Lenovo\AppData\Local\Temp\ccmzoOKk.s:218    .text.SCurve_Done:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\ccmzoOKk.s:225    .text.SCurve_Done:00000000 SCurve_Done
+
+UNDEFINED SYMBOLS
+lroundf

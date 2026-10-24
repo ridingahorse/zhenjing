@@ -1,4 +1,4 @@
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -28,7 +28,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
   25              		.thumb_func
   27              	galvo_dma_error_cb:
   28              	.LVL0:
-  29              	.LFB140:
+  29              	.LFB141:
    1:Galvo/galvo.c **** /**
    2:Galvo/galvo.c ****   ******************************************************************************
    3:Galvo/galvo.c ****   * @file    galvo.c
@@ -45,208 +45,208 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
   14:Galvo/galvo.c **** #include "galvo.h"
   15:Galvo/galvo.c **** #include "galvo_lut.h"
   16:Galvo/galvo.c **** #include "comm.h"
-  17:Galvo/galvo.c **** #include "tim.h"
-  18:Galvo/galvo.c **** #include "main.h"
-  19:Galvo/galvo.c **** 
-  20:Galvo/galvo.c **** #include <string.h>
-  21:Galvo/galvo.c **** #include <math.h>
-  22:Galvo/galvo.c **** 
-  23:Galvo/galvo.c **** /* ---- XY2-100 帧结构 ------------------------------------------------------ */
-  24:Galvo/galvo.c **** #define XY_BEATS        20U                 /* 一帧 20 个时钟周期            */
-  25:Galvo/galvo.c **** #define XY_BUF_WORDS    (XY_BEATS * 2U)     /* 乒乓双缓冲: 两帧共 40 个 word */
-  26:Galvo/galvo.c **** 
-  27:Galvo/galvo.c **** /* GPIOB->BSRR 位掩码 (低 16 位=置位, 高 16 位=复位) */
-  28:Galvo/galvo.c **** #define M_SYNC          (1UL << 7)          /* PB7 */
-  29:Galvo/galvo.c **** #define M_X             (1UL << 5)          /* PB5 */
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 2
+  17:Galvo/galvo.c **** #include "scurve.h"
+  18:Galvo/galvo.c **** #include "laser.h"
+  19:Galvo/galvo.c **** #include "tim.h"
+  20:Galvo/galvo.c **** #include "main.h"
+  21:Galvo/galvo.c **** 
+  22:Galvo/galvo.c **** #include <string.h>
+  23:Galvo/galvo.c **** #include <math.h>
+  24:Galvo/galvo.c **** 
+  25:Galvo/galvo.c **** /* ---- XY2-100 帧结构 ------------------------------------------------------ */
+  26:Galvo/galvo.c **** #define XY_BEATS        20U                 /* 一帧 20 个时钟周期            */
+  27:Galvo/galvo.c **** #define XY_BUF_WORDS    (XY_BEATS * 2U)     /* 乒乓双缓冲: 两帧共 40 个 word */
+  28:Galvo/galvo.c **** 
+  29:Galvo/galvo.c **** /* GPIOB->BSRR 位掩码 (低 16 位=置位, 高 16 位=复位) */
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 2
 
 
-  30:Galvo/galvo.c **** #define M_Y             (1UL << 6)          /* PB6 */
-  31:Galvo/galvo.c **** 
-  32:Galvo/galvo.c **** /* 一个 BSRR 控制字: 同时确定 SYNC/X/Y 三条线的电平 */
-  33:Galvo/galvo.c **** #define BSRR_LEVEL(mask, lvl)  ((lvl) ? (mask) : ((mask) << 16))
-  34:Galvo/galvo.c **** 
-  35:Galvo/galvo.c **** /* ---- 双半区缓冲 ---------------------------------------------------------- */
-  36:Galvo/galvo.c **** static uint32_t galvo_frame[2][XY_BEATS];   /* DMA 搬运区，[0]=A 半区，[1]=B 半区 */
-  37:Galvo/galvo.c **** static uint32_t galvo_stage[XY_BEATS];      /* 主循环编码区 */
-  38:Galvo/galvo.c **** 
-  39:Galvo/galvo.c **** /* 代号：stage 写完才自增；半区拷贝完才跟上，主循环据此判断能否覆盖 st
-  40:Galvo/galvo.c **** static volatile uint32_t galvo_stage_gen = 0U;
-  41:Galvo/galvo.c **** static volatile uint32_t galvo_a_gen = 0U;
-  42:Galvo/galvo.c **** static volatile uint32_t galvo_b_gen = 0U;
-  43:Galvo/galvo.c **** 
-  44:Galvo/galvo.c **** static uint8_t galvo_ctrl = 0x1U;           /* 控制字 001 */
+  30:Galvo/galvo.c **** #define M_SYNC          (1UL << 7)          /* PB7 */
+  31:Galvo/galvo.c **** #define M_X             (1UL << 5)          /* PB5 */
+  32:Galvo/galvo.c **** #define M_Y             (1UL << 6)          /* PB6 */
+  33:Galvo/galvo.c **** 
+  34:Galvo/galvo.c **** /* 一个 BSRR 控制字: 同时确定 SYNC/X/Y 三条线的电平 */
+  35:Galvo/galvo.c **** #define BSRR_LEVEL(mask, lvl)  ((lvl) ? (mask) : ((mask) << 16))
+  36:Galvo/galvo.c **** 
+  37:Galvo/galvo.c **** /* ---- 双半区缓冲 ---------------------------------------------------------- */
+  38:Galvo/galvo.c **** static uint32_t galvo_frame[2][XY_BEATS];   /* DMA 搬运区，[0]=A 半区，[1]=B 半区 */
+  39:Galvo/galvo.c **** static uint32_t galvo_stage[XY_BEATS];      /* 主循环编码区 */
+  40:Galvo/galvo.c **** 
+  41:Galvo/galvo.c **** /* 代号：stage 写完才自增；半区拷贝完才跟上，主循环据此判断能否覆盖 st
+  42:Galvo/galvo.c **** static volatile uint32_t galvo_stage_gen = 0U;
+  43:Galvo/galvo.c **** static volatile uint32_t galvo_a_gen = 0U;
+  44:Galvo/galvo.c **** static volatile uint32_t galvo_b_gen = 0U;
   45:Galvo/galvo.c **** 
-  46:Galvo/galvo.c **** static volatile uint32_t galvo_drop = 0U;
-  47:Galvo/galvo.c **** static volatile uint32_t galvo_dma_err = 0U;
-  48:Galvo/galvo.c **** 
-  49:Galvo/galvo.c **** /* ---- 调试计时 ---- */
-  50:Galvo/galvo.c **** volatile uint32_t g_dma_copy_cycles = 0U;
-  51:Galvo/galvo.c **** volatile uint32_t g_rx_to_dma_cycles = 0U;
-  52:Galvo/galvo.c **** 
-  53:Galvo/galvo.c **** /* ---- 内部函数 ------------------------------------------------------------ */
-  54:Galvo/galvo.c **** static float galvo_lut_sample(const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
-  55:Galvo/galvo.c ****                               uint32_t ax, uint32_t ay);
-  56:Galvo/galvo.c **** static uint16_t galvo_axis_cmd(int32_t d, uint32_t ax, uint32_t ay,
-  57:Galvo/galvo.c ****                                const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
-  58:Galvo/galvo.c ****                                float offset);
-  59:Galvo/galvo.c **** static void galvo_build_stage(int16_t x, int16_t y, uint32_t *buf);
-  60:Galvo/galvo.c **** static void galvo_encode(uint16_t cx, uint16_t cy, uint32_t *buf);
-  61:Galvo/galvo.c **** static void galvo_dma_half_cb(DMA_HandleTypeDef *hdma);
-  62:Galvo/galvo.c **** static void galvo_dma_cplt_cb(DMA_HandleTypeDef *hdma);
-  63:Galvo/galvo.c **** static void galvo_dma_error_cb(DMA_HandleTypeDef *hdma);
-  64:Galvo/galvo.c **** 
-  65:Galvo/galvo.c **** /* ---- LUT ---------------------------------------------------------------- */
-  66:Galvo/galvo.c **** 
-  67:Galvo/galvo.c **** /**
-  68:Galvo/galvo.c ****   * @brief 双线性插值取样，ax/ay 为坐标绝对值（0..32768）
-  69:Galvo/galvo.c ****   * @retval 校正量（弧度），未标定时为 0
-  70:Galvo/galvo.c ****   */
-  71:Galvo/galvo.c **** static float galvo_lut_sample(const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
-  72:Galvo/galvo.c ****                               uint32_t ax, uint32_t ay)
-  73:Galvo/galvo.c **** {
-  74:Galvo/galvo.c ****   uint32_t ix, iy;
-  75:Galvo/galvo.c ****   float fx, fy, v00, v10, v01, v11, top, bot;
-  76:Galvo/galvo.c **** 
-  77:Galvo/galvo.c ****   if (ax > 32767U) { ax = 32767U; }
-  78:Galvo/galvo.c ****   if (ay > 32767U) { ay = 32767U; }
-  79:Galvo/galvo.c **** 
-  80:Galvo/galvo.c ****   ix = ax >> 8;
-  81:Galvo/galvo.c ****   iy = ay >> 8;
-  82:Galvo/galvo.c **** 
-  83:Galvo/galvo.c ****   /* 插值需要 i+1，索引限制在 0..126；末段的分数部分截到 1.0 */
-  84:Galvo/galvo.c ****   if (ix > (GALVO_LUT_SIZE - 2U)) { ix = GALVO_LUT_SIZE - 2U; }
-  85:Galvo/galvo.c ****   if (iy > (GALVO_LUT_SIZE - 2U)) { iy = GALVO_LUT_SIZE - 2U; }
-  86:Galvo/galvo.c **** 
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 3
+  46:Galvo/galvo.c **** static uint8_t galvo_ctrl = 0x1U;           /* 控制字 001 */
+  47:Galvo/galvo.c **** 
+  48:Galvo/galvo.c **** static volatile uint32_t galvo_dma_err = 0U;
+  49:Galvo/galvo.c **** 
+  50:Galvo/galvo.c **** /* ---- S 曲线规划 ---------------------------------------------------------- */
+  51:Galvo/galvo.c **** typedef enum
+  52:Galvo/galvo.c **** {
+  53:Galvo/galvo.c ****   GALVO_IDLE = 0,               /* 等待下一个目标点 */
+  54:Galvo/galvo.c ****   GALVO_MOVING                  /* 正在按 S 曲线走向目标点 */
+  55:Galvo/galvo.c **** } galvo_plan_state_t;
+  56:Galvo/galvo.c **** 
+  57:Galvo/galvo.c **** static SCurve galvo_scurve;
+  58:Galvo/galvo.c **** static galvo_plan_state_t galvo_plan_state = GALVO_IDLE;
+  59:Galvo/galvo.c **** static int16_t galvo_cur_x = 0;            /* 当前输出的坐标 */
+  60:Galvo/galvo.c **** static int16_t galvo_cur_y = 0;
+  61:Galvo/galvo.c **** static uint32_t galvo_last_point_cycle = 0U;   /* 上一个规划点的输出时刻 */
+  62:Galvo/galvo.c **** static uint32_t galvo_last_arrive_cycle = 0U;  /* 到达上一个目标点的时刻 */
+  63:Galvo/galvo.c **** 
+  64:Galvo/galvo.c **** /* µs → DWT 周期（168 MHz 下 1 µs = 168 周期） */
+  65:Galvo/galvo.c **** static uint32_t galvo_us_to_cycles(uint32_t us)
+  66:Galvo/galvo.c **** {
+  67:Galvo/galvo.c ****   return us * (SystemCoreClock / 1000000U);
+  68:Galvo/galvo.c **** }
+  69:Galvo/galvo.c **** 
+  70:Galvo/galvo.c **** /* ---- 调试计时 ---- */
+  71:Galvo/galvo.c **** volatile uint32_t g_dma_copy_cycles = 0U;
+  72:Galvo/galvo.c **** volatile uint32_t g_rx_to_dma_cycles = 0U;
+  73:Galvo/galvo.c **** 
+  74:Galvo/galvo.c **** /* ---- 内部函数 ------------------------------------------------------------ */
+  75:Galvo/galvo.c **** static float galvo_lut_sample(const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
+  76:Galvo/galvo.c ****                               uint32_t ax, uint32_t ay);
+  77:Galvo/galvo.c **** static uint16_t galvo_axis_cmd(int32_t d, uint32_t ax, uint32_t ay,
+  78:Galvo/galvo.c ****                                const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
+  79:Galvo/galvo.c ****                                float offset);
+  80:Galvo/galvo.c **** static void galvo_build_stage(int16_t x, int16_t y, uint32_t *buf);
+  81:Galvo/galvo.c **** static void galvo_encode(uint16_t cx, uint16_t cy, uint32_t *buf);
+  82:Galvo/galvo.c **** static void galvo_dma_half_cb(DMA_HandleTypeDef *hdma);
+  83:Galvo/galvo.c **** static void galvo_dma_cplt_cb(DMA_HandleTypeDef *hdma);
+  84:Galvo/galvo.c **** static void galvo_dma_error_cb(DMA_HandleTypeDef *hdma);
+  85:Galvo/galvo.c **** 
+  86:Galvo/galvo.c **** /* ---- LUT ---------------------------------------------------------------- */
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 3
 
 
-  87:Galvo/galvo.c ****   fx = (float)(ax - (ix << 8)) * (1.0f / 256.0f);
-  88:Galvo/galvo.c ****   fy = (float)(ay - (iy << 8)) * (1.0f / 256.0f);
-  89:Galvo/galvo.c ****   if (fx > 1.0f) { fx = 1.0f; }
-  90:Galvo/galvo.c ****   if (fy > 1.0f) { fy = 1.0f; }
-  91:Galvo/galvo.c **** 
-  92:Galvo/galvo.c ****   v00 = (float)lut[iy][ix];
-  93:Galvo/galvo.c ****   v10 = (float)lut[iy][ix + 1U];
-  94:Galvo/galvo.c ****   v01 = (float)lut[iy + 1U][ix];
-  95:Galvo/galvo.c ****   v11 = (float)lut[iy + 1U][ix + 1U];
-  96:Galvo/galvo.c **** 
-  97:Galvo/galvo.c ****   top = v00 + (v10 - v00) * fx;
-  98:Galvo/galvo.c ****   bot = v01 + (v11 - v01) * fx;
-  99:Galvo/galvo.c ****   return (top + (bot - top) * fy) * GALVO_LUT_UNIT;
- 100:Galvo/galvo.c **** }
- 101:Galvo/galvo.c **** 
- 102:Galvo/galvo.c **** /**
- 103:Galvo/galvo.c ****   * @brief 单轴：α = sgn(d) × (|d|/(2f) + LUT)，再换算成 16bit 命令字
- 104:Galvo/galvo.c ****   *
- 105:Galvo/galvo.c ****   * @param  d      有符号坐标
- 106:Galvo/galvo.c ****   * @param  ax/ay  坐标绝对值，用于查表
- 107:Galvo/galvo.c ****   * @param  offset 该轴的零点角度 α0/β0
- 108:Galvo/galvo.c ****   */
- 109:Galvo/galvo.c **** static uint16_t galvo_axis_cmd(int32_t d, uint32_t ax, uint32_t ay,
- 110:Galvo/galvo.c ****                                const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
- 111:Galvo/galvo.c ****                                float offset)
- 112:Galvo/galvo.c **** {
- 113:Galvo/galvo.c ****   float ang = (float)ax / (2.0f * GALVO_F) + galvo_lut_sample(lut, ax, ay);
- 114:Galvo/galvo.c ****   int32_t cmd;
- 115:Galvo/galvo.c **** 
- 116:Galvo/galvo.c ****   if (d < 0) { ang = -ang; }
+  87:Galvo/galvo.c **** 
+  88:Galvo/galvo.c **** /**
+  89:Galvo/galvo.c ****   * @brief 双线性插值取样，ax/ay 为坐标绝对值（0..32768）
+  90:Galvo/galvo.c ****   * @retval 校正量（弧度），未标定时为 0
+  91:Galvo/galvo.c ****   */
+  92:Galvo/galvo.c **** static float galvo_lut_sample(const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
+  93:Galvo/galvo.c ****                               uint32_t ax, uint32_t ay)
+  94:Galvo/galvo.c **** {
+  95:Galvo/galvo.c ****   uint32_t ix, iy;
+  96:Galvo/galvo.c ****   float fx, fy, v00, v10, v01, v11, top, bot;
+  97:Galvo/galvo.c **** 
+  98:Galvo/galvo.c ****   if (ax > 32767U) { ax = 32767U; }
+  99:Galvo/galvo.c ****   if (ay > 32767U) { ay = 32767U; }
+ 100:Galvo/galvo.c **** 
+ 101:Galvo/galvo.c ****   ix = ax >> 8;
+ 102:Galvo/galvo.c ****   iy = ay >> 8;
+ 103:Galvo/galvo.c **** 
+ 104:Galvo/galvo.c ****   /* 插值需要 i+1，索引限制在 0..126；末段的分数部分截到 1.0 */
+ 105:Galvo/galvo.c ****   if (ix > (GALVO_LUT_SIZE - 2U)) { ix = GALVO_LUT_SIZE - 2U; }
+ 106:Galvo/galvo.c ****   if (iy > (GALVO_LUT_SIZE - 2U)) { iy = GALVO_LUT_SIZE - 2U; }
+ 107:Galvo/galvo.c **** 
+ 108:Galvo/galvo.c ****   fx = (float)(ax - (ix << 8)) * (1.0f / 256.0f);
+ 109:Galvo/galvo.c ****   fy = (float)(ay - (iy << 8)) * (1.0f / 256.0f);
+ 110:Galvo/galvo.c ****   if (fx > 1.0f) { fx = 1.0f; }
+ 111:Galvo/galvo.c ****   if (fy > 1.0f) { fy = 1.0f; }
+ 112:Galvo/galvo.c **** 
+ 113:Galvo/galvo.c ****   v00 = (float)lut[iy][ix];
+ 114:Galvo/galvo.c ****   v10 = (float)lut[iy][ix + 1U];
+ 115:Galvo/galvo.c ****   v01 = (float)lut[iy + 1U][ix];
+ 116:Galvo/galvo.c ****   v11 = (float)lut[iy + 1U][ix + 1U];
  117:Galvo/galvo.c **** 
- 118:Galvo/galvo.c ****   cmd = (int32_t)lroundf((ang - offset) * GALVO_COUNTS_PER_RAD + GALVO_CMD_CENTER);
- 119:Galvo/galvo.c **** 
- 120:Galvo/galvo.c ****   if (cmd < 0)      { cmd = 0; }
- 121:Galvo/galvo.c ****   if (cmd > 65535)  { cmd = 65535; }
+ 118:Galvo/galvo.c ****   top = v00 + (v10 - v00) * fx;
+ 119:Galvo/galvo.c ****   bot = v01 + (v11 - v01) * fx;
+ 120:Galvo/galvo.c ****   return (top + (bot - top) * fy) * GALVO_LUT_UNIT;
+ 121:Galvo/galvo.c **** }
  122:Galvo/galvo.c **** 
- 123:Galvo/galvo.c ****   return (uint16_t)cmd;
- 124:Galvo/galvo.c **** }
- 125:Galvo/galvo.c **** 
- 126:Galvo/galvo.c **** /**
- 127:Galvo/galvo.c ****   * @brief 把一对坐标换算成命令字并编码成一帧 20 个 BSRR 控制字
- 128:Galvo/galvo.c ****   */
- 129:Galvo/galvo.c **** static void galvo_build_stage(int16_t x, int16_t y, uint32_t *buf)
- 130:Galvo/galvo.c **** {
- 131:Galvo/galvo.c ****   uint32_t ax = (uint32_t)(x < 0 ? -(int32_t)x : (int32_t)x);
- 132:Galvo/galvo.c ****   uint32_t ay = (uint32_t)(y < 0 ? -(int32_t)y : (int32_t)y);
- 133:Galvo/galvo.c **** 
- 134:Galvo/galvo.c ****   uint16_t cx = galvo_axis_cmd(x, ax, ay, galvo_lut_alpha, GALVO_ALPHA0);
- 135:Galvo/galvo.c ****   uint16_t cy = galvo_axis_cmd(y, ax, ay, galvo_lut_beta,  GALVO_BETA0);
+ 123:Galvo/galvo.c **** /**
+ 124:Galvo/galvo.c ****   * @brief 单轴：α = sgn(d) × (|d|/(2f) + LUT)，再换算成 16bit 命令字
+ 125:Galvo/galvo.c ****   *
+ 126:Galvo/galvo.c ****   * @param  d      有符号坐标
+ 127:Galvo/galvo.c ****   * @param  ax/ay  坐标绝对值，用于查表
+ 128:Galvo/galvo.c ****   * @param  offset 该轴的零点角度 α0/β0
+ 129:Galvo/galvo.c ****   */
+ 130:Galvo/galvo.c **** static uint16_t galvo_axis_cmd(int32_t d, uint32_t ax, uint32_t ay,
+ 131:Galvo/galvo.c ****                                const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
+ 132:Galvo/galvo.c ****                                float offset)
+ 133:Galvo/galvo.c **** {
+ 134:Galvo/galvo.c ****   float ang = (float)ax / (2.0f * GALVO_F) + galvo_lut_sample(lut, ax, ay);
+ 135:Galvo/galvo.c ****   int32_t cmd;
  136:Galvo/galvo.c **** 
- 137:Galvo/galvo.c ****   galvo_encode(cx, cy, buf);
- 138:Galvo/galvo.c **** }
- 139:Galvo/galvo.c **** 
- 140:Galvo/galvo.c **** /**
- 141:Galvo/galvo.c ****   * @brief 编码一帧 XY2-100
- 142:Galvo/galvo.c ****   *
- 143:Galvo/galvo.c ****   * 20 bit, MSB first:
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 4
+ 137:Galvo/galvo.c ****   if (d < 0) { ang = -ang; }
+ 138:Galvo/galvo.c **** 
+ 139:Galvo/galvo.c ****   cmd = (int32_t)lroundf((ang - offset) * GALVO_COUNTS_PER_RAD + GALVO_CMD_CENTER);
+ 140:Galvo/galvo.c **** 
+ 141:Galvo/galvo.c ****   if (cmd < 0)      { cmd = 0; }
+ 142:Galvo/galvo.c ****   if (cmd > 65535)  { cmd = 65535; }
+ 143:Galvo/galvo.c **** 
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 4
 
 
- 144:Galvo/galvo.c ****   *   bit 0..2   C2 C1 C0（控制字）
- 145:Galvo/galvo.c ****   *   bit 3..18  16bit 命令字，offset binary
- 146:Galvo/galvo.c ****   *   bit 19     偶校验（对前 19 位异或）
- 147:Galvo/galvo.c ****   * SYNC 前 19 拍为高，第 20 拍拉低。
- 148:Galvo/galvo.c ****   */
- 149:Galvo/galvo.c **** static void galvo_encode(uint16_t cx, uint16_t cy, uint32_t *buf)
- 150:Galvo/galvo.c **** {
- 151:Galvo/galvo.c ****   uint32_t ctrl = ((uint32_t)galvo_ctrl & 0x7U) << 16;
- 152:Galvo/galvo.c ****   uint32_t wx = ctrl | cx;
- 153:Galvo/galvo.c ****   uint32_t wy = ctrl | cy;
- 154:Galvo/galvo.c ****   uint32_t px = 0U, py = 0U;
- 155:Galvo/galvo.c **** 
- 156:Galvo/galvo.c ****   for (uint32_t i = 0U; i < 19U; i++)
- 157:Galvo/galvo.c ****   {
- 158:Galvo/galvo.c ****     uint32_t bx = (wx >> (18U - i)) & 1U;
- 159:Galvo/galvo.c ****     uint32_t by = (wy >> (18U - i)) & 1U;
+ 144:Galvo/galvo.c ****   return (uint16_t)cmd;
+ 145:Galvo/galvo.c **** }
+ 146:Galvo/galvo.c **** 
+ 147:Galvo/galvo.c **** /**
+ 148:Galvo/galvo.c ****   * @brief 把一对坐标换算成命令字并编码成一帧 20 个 BSRR 控制字
+ 149:Galvo/galvo.c ****   */
+ 150:Galvo/galvo.c **** static void galvo_build_stage(int16_t x, int16_t y, uint32_t *buf)
+ 151:Galvo/galvo.c **** {
+ 152:Galvo/galvo.c ****   uint32_t ax = (uint32_t)(x < 0 ? -(int32_t)x : (int32_t)x);
+ 153:Galvo/galvo.c ****   uint32_t ay = (uint32_t)(y < 0 ? -(int32_t)y : (int32_t)y);
+ 154:Galvo/galvo.c **** 
+ 155:Galvo/galvo.c ****   uint16_t cx = galvo_axis_cmd(x, ax, ay, galvo_lut_alpha, GALVO_ALPHA0);
+ 156:Galvo/galvo.c ****   uint16_t cy = galvo_axis_cmd(y, ax, ay, galvo_lut_beta,  GALVO_BETA0);
+ 157:Galvo/galvo.c **** 
+ 158:Galvo/galvo.c ****   galvo_encode(cx, cy, buf);
+ 159:Galvo/galvo.c **** }
  160:Galvo/galvo.c **** 
- 161:Galvo/galvo.c ****     px ^= bx;
- 162:Galvo/galvo.c ****     py ^= by;
- 163:Galvo/galvo.c **** 
- 164:Galvo/galvo.c ****     /* 三条线每个节拍都必须明确置位或复位，BSRR 没有"保持"语义 */
- 165:Galvo/galvo.c ****     buf[i] = BSRR_LEVEL(M_SYNC, 1U) | BSRR_LEVEL(M_X, bx) | BSRR_LEVEL(M_Y, by);
- 166:Galvo/galvo.c ****   }
- 167:Galvo/galvo.c **** 
- 168:Galvo/galvo.c ****   buf[19] = BSRR_LEVEL(M_SYNC, 0U) | BSRR_LEVEL(M_X, px) | BSRR_LEVEL(M_Y, py);
- 169:Galvo/galvo.c **** }
- 170:Galvo/galvo.c **** 
- 171:Galvo/galvo.c **** /* ---- DMA 中断：帧边界搬运 ------------------------------------------------ */
- 172:Galvo/galvo.c **** 
- 173:Galvo/galvo.c **** /* 上半区(A)刚发完，DMA 正在发 B，可以重填 A */
- 174:Galvo/galvo.c **** static void galvo_dma_half_cb(DMA_HandleTypeDef *hdma)
- 175:Galvo/galvo.c **** {
- 176:Galvo/galvo.c ****   if (hdma->Instance == DMA2_Stream5)
- 177:Galvo/galvo.c ****   {
- 178:Galvo/galvo.c ****     if (galvo_a_gen != galvo_stage_gen)
- 179:Galvo/galvo.c ****     {
- 180:Galvo/galvo.c ****       uint32_t a = DWT->CYCCNT;             /* 拷贝前 */
- 181:Galvo/galvo.c ****       uint32_t b;
- 182:Galvo/galvo.c **** 
- 183:Galvo/galvo.c ****       memcpy(galvo_frame[0], galvo_stage, sizeof(galvo_stage));
- 184:Galvo/galvo.c ****       __DMB();
- 185:Galvo/galvo.c ****       galvo_a_gen = galvo_stage_gen;
- 186:Galvo/galvo.c **** 
- 187:Galvo/galvo.c ****       b = DWT->CYCCNT;                      /* 拷贝后 */
- 188:Galvo/galvo.c ****       g_dma_copy_cycles = b - a;
- 189:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
- 190:Galvo/galvo.c ****     }
- 191:Galvo/galvo.c ****   }
- 192:Galvo/galvo.c **** }
+ 161:Galvo/galvo.c **** /**
+ 162:Galvo/galvo.c ****   * @brief 编码一帧 XY2-100
+ 163:Galvo/galvo.c ****   *
+ 164:Galvo/galvo.c ****   * 20 bit, MSB first:
+ 165:Galvo/galvo.c ****   *   bit 0..2   C2 C1 C0（控制字）
+ 166:Galvo/galvo.c ****   *   bit 3..18  16bit 命令字，offset binary
+ 167:Galvo/galvo.c ****   *   bit 19     偶校验（对前 19 位异或）
+ 168:Galvo/galvo.c ****   * SYNC 前 19 拍为高，第 20 拍拉低。
+ 169:Galvo/galvo.c ****   */
+ 170:Galvo/galvo.c **** static void galvo_encode(uint16_t cx, uint16_t cy, uint32_t *buf)
+ 171:Galvo/galvo.c **** {
+ 172:Galvo/galvo.c ****   uint32_t ctrl = ((uint32_t)galvo_ctrl & 0x7U) << 16;
+ 173:Galvo/galvo.c ****   uint32_t wx = ctrl | cx;
+ 174:Galvo/galvo.c ****   uint32_t wy = ctrl | cy;
+ 175:Galvo/galvo.c ****   uint32_t px = 0U, py = 0U;
+ 176:Galvo/galvo.c **** 
+ 177:Galvo/galvo.c ****   for (uint32_t i = 0U; i < 19U; i++)
+ 178:Galvo/galvo.c ****   {
+ 179:Galvo/galvo.c ****     uint32_t bx = (wx >> (18U - i)) & 1U;
+ 180:Galvo/galvo.c ****     uint32_t by = (wy >> (18U - i)) & 1U;
+ 181:Galvo/galvo.c **** 
+ 182:Galvo/galvo.c ****     px ^= bx;
+ 183:Galvo/galvo.c ****     py ^= by;
+ 184:Galvo/galvo.c **** 
+ 185:Galvo/galvo.c ****     /* 三条线每个节拍都必须明确置位或复位，BSRR 没有"保持"语义 */
+ 186:Galvo/galvo.c ****     buf[i] = BSRR_LEVEL(M_SYNC, 1U) | BSRR_LEVEL(M_X, bx) | BSRR_LEVEL(M_Y, by);
+ 187:Galvo/galvo.c ****   }
+ 188:Galvo/galvo.c **** 
+ 189:Galvo/galvo.c ****   buf[19] = BSRR_LEVEL(M_SYNC, 0U) | BSRR_LEVEL(M_X, px) | BSRR_LEVEL(M_Y, py);
+ 190:Galvo/galvo.c **** }
+ 191:Galvo/galvo.c **** 
+ 192:Galvo/galvo.c **** /* ---- DMA 中断：帧边界搬运 ------------------------------------------------ */
  193:Galvo/galvo.c **** 
- 194:Galvo/galvo.c **** /* 下半区(B)刚发完，DMA 绕回 A，可以重填 B */
- 195:Galvo/galvo.c **** static void galvo_dma_cplt_cb(DMA_HandleTypeDef *hdma)
+ 194:Galvo/galvo.c **** /* 上半区(A)刚发完，DMA 正在发 B，可以重填 A */
+ 195:Galvo/galvo.c **** static void galvo_dma_half_cb(DMA_HandleTypeDef *hdma)
  196:Galvo/galvo.c **** {
  197:Galvo/galvo.c ****   if (hdma->Instance == DMA2_Stream5)
  198:Galvo/galvo.c ****   {
- 199:Galvo/galvo.c ****     if (galvo_b_gen != galvo_stage_gen)
+ 199:Galvo/galvo.c ****     if (galvo_a_gen != galvo_stage_gen)
  200:Galvo/galvo.c ****     {
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 5
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 5
 
 
  201:Galvo/galvo.c ****       uint32_t a = DWT->CYCCNT;             /* 拷贝前 */
  202:Galvo/galvo.c ****       uint32_t b;
  203:Galvo/galvo.c **** 
- 204:Galvo/galvo.c ****       memcpy(galvo_frame[1], galvo_stage, sizeof(galvo_stage));
+ 204:Galvo/galvo.c ****       memcpy(galvo_frame[0], galvo_stage, sizeof(galvo_stage));
  205:Galvo/galvo.c ****       __DMB();
- 206:Galvo/galvo.c ****       galvo_b_gen = galvo_stage_gen;
+ 206:Galvo/galvo.c ****       galvo_a_gen = galvo_stage_gen;
  207:Galvo/galvo.c **** 
  208:Galvo/galvo.c ****       b = DWT->CYCCNT;                      /* 拷贝后 */
  209:Galvo/galvo.c ****       g_dma_copy_cycles = b - a;
@@ -255,32 +255,56 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  212:Galvo/galvo.c ****   }
  213:Galvo/galvo.c **** }
  214:Galvo/galvo.c **** 
- 215:Galvo/galvo.c **** /* 只记录故障：恢复操作（Abort/Start）会造成断拍 */
- 216:Galvo/galvo.c **** static void galvo_dma_error_cb(DMA_HandleTypeDef *hdma)
+ 215:Galvo/galvo.c **** /* 下半区(B)刚发完，DMA 绕回 A，可以重填 B */
+ 216:Galvo/galvo.c **** static void galvo_dma_cplt_cb(DMA_HandleTypeDef *hdma)
  217:Galvo/galvo.c **** {
-  30              		.loc 1 217 1 view -0
+ 218:Galvo/galvo.c ****   if (hdma->Instance == DMA2_Stream5)
+ 219:Galvo/galvo.c ****   {
+ 220:Galvo/galvo.c ****     if (galvo_b_gen != galvo_stage_gen)
+ 221:Galvo/galvo.c ****     {
+ 222:Galvo/galvo.c ****       uint32_t a = DWT->CYCCNT;             /* 拷贝前 */
+ 223:Galvo/galvo.c ****       uint32_t b;
+ 224:Galvo/galvo.c **** 
+ 225:Galvo/galvo.c ****       memcpy(galvo_frame[1], galvo_stage, sizeof(galvo_stage));
+ 226:Galvo/galvo.c ****       __DMB();
+ 227:Galvo/galvo.c ****       galvo_b_gen = galvo_stage_gen;
+ 228:Galvo/galvo.c **** 
+ 229:Galvo/galvo.c ****       b = DWT->CYCCNT;                      /* 拷贝后 */
+ 230:Galvo/galvo.c ****       g_dma_copy_cycles = b - a;
+ 231:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
+ 232:Galvo/galvo.c ****     }
+ 233:Galvo/galvo.c ****   }
+ 234:Galvo/galvo.c **** }
+ 235:Galvo/galvo.c **** 
+ 236:Galvo/galvo.c **** /* 只记录故障：恢复操作（Abort/Start）会造成断拍 */
+ 237:Galvo/galvo.c **** static void galvo_dma_error_cb(DMA_HandleTypeDef *hdma)
+ 238:Galvo/galvo.c **** {
+  30              		.loc 1 238 1 view -0
   31              		.cfi_startproc
   32              		@ args = 0, pretend = 0, frame = 0
   33              		@ frame_needed = 0, uses_anonymous_args = 0
   34              		@ link register save eliminated.
- 218:Galvo/galvo.c ****   (void)hdma;
-  35              		.loc 1 218 3 view .LVU1
- 219:Galvo/galvo.c ****   galvo_dma_err++;
-  36              		.loc 1 219 3 view .LVU2
-  37              		.loc 1 219 16 is_stmt 0 view .LVU3
+ 239:Galvo/galvo.c ****   (void)hdma;
+  35              		.loc 1 239 3 view .LVU1
+ 240:Galvo/galvo.c ****   galvo_dma_err++;
+  36              		.loc 1 240 3 view .LVU2
+  37              		.loc 1 240 16 is_stmt 0 view .LVU3
   38 0000 024A     		ldr	r2, .L3
   39 0002 1368     		ldr	r3, [r2]
   40 0004 0133     		adds	r3, r3, #1
   41 0006 1360     		str	r3, [r2]
- 220:Galvo/galvo.c **** }
-  42              		.loc 1 220 1 view .LVU4
+ 241:Galvo/galvo.c **** }
+  42              		.loc 1 241 1 view .LVU4
   43 0008 7047     		bx	lr
   44              	.L4:
   45 000a 00BF     		.align	2
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 6
+
+
   46              	.L3:
   47 000c 00000000 		.word	galvo_dma_err
   48              		.cfi_endproc
-  49              	.LFE140:
+  49              	.LFE141:
   51              		.section	.text.galvo_dma_half_cb,"ax",%progbits
   52              		.align	1
   53              		.p2align 2,,3
@@ -289,19 +313,16 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
   56              		.thumb_func
   58              	galvo_dma_half_cb:
   59              	.LVL1:
-  60              	.LFB138:
- 175:Galvo/galvo.c ****   if (hdma->Instance == DMA2_Stream5)
-  61              		.loc 1 175 1 is_stmt 1 view -0
+  60              	.LFB139:
+ 196:Galvo/galvo.c ****   if (hdma->Instance == DMA2_Stream5)
+  61              		.loc 1 196 1 is_stmt 1 view -0
   62              		.cfi_startproc
   63              		@ args = 0, pretend = 0, frame = 0
   64              		@ frame_needed = 0, uses_anonymous_args = 0
- 176:Galvo/galvo.c ****   {
-  65              		.loc 1 176 3 view .LVU6
- 175:Galvo/galvo.c ****   if (hdma->Instance == DMA2_Stream5)
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 6
-
-
-  66              		.loc 1 175 1 is_stmt 0 view .LVU7
+ 197:Galvo/galvo.c ****   {
+  65              		.loc 1 197 3 view .LVU6
+ 196:Galvo/galvo.c ****   if (hdma->Instance == DMA2_Stream5)
+  66              		.loc 1 196 1 is_stmt 0 view .LVU7
   67 0000 F8B5     		push	{r3, r4, r5, r6, r7, lr}
   68              	.LCFI0:
   69              		.cfi_def_cfa_offset 24
@@ -311,64 +332,64 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
   73              		.cfi_offset 6, -12
   74              		.cfi_offset 7, -8
   75              		.cfi_offset 14, -4
- 176:Galvo/galvo.c ****   {
-  76              		.loc 1 176 6 view .LVU8
+ 197:Galvo/galvo.c ****   {
+  76              		.loc 1 197 6 view .LVU8
   77 0002 0268     		ldr	r2, [r0]
   78 0004 0F4B     		ldr	r3, .L9
   79 0006 9A42     		cmp	r2, r3
   80 0008 00D0     		beq	.L8
   81              	.L5:
- 192:Galvo/galvo.c **** 
-  82              		.loc 1 192 1 view .LVU9
+ 213:Galvo/galvo.c **** 
+  82              		.loc 1 213 1 view .LVU9
   83 000a F8BD     		pop	{r3, r4, r5, r6, r7, pc}
   84              	.L8:
- 178:Galvo/galvo.c ****     {
-  85              		.loc 1 178 5 is_stmt 1 view .LVU10
- 178:Galvo/galvo.c ****     {
-  86              		.loc 1 178 21 is_stmt 0 view .LVU11
+ 199:Galvo/galvo.c ****     {
+  85              		.loc 1 199 5 is_stmt 1 view .LVU10
+ 199:Galvo/galvo.c ****     {
+  86              		.loc 1 199 21 is_stmt 0 view .LVU11
   87 000c 0E4C     		ldr	r4, .L9+4
   88 000e 0F4D     		ldr	r5, .L9+8
   89 0010 2268     		ldr	r2, [r4]
   90 0012 2B68     		ldr	r3, [r5]
- 178:Galvo/galvo.c ****     {
-  91              		.loc 1 178 8 view .LVU12
+ 199:Galvo/galvo.c ****     {
+  91              		.loc 1 199 8 view .LVU12
   92 0014 9A42     		cmp	r2, r3
   93 0016 F8D0     		beq	.L5
-  94              	.LBB21:
-  95              	.LBI21:
- 174:Galvo/galvo.c **** {
-  96              		.loc 1 174 13 is_stmt 1 view .LVU13
+  94              	.LBB29:
+  95              	.LBI29:
+ 195:Galvo/galvo.c **** {
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 7
+
+
+  96              		.loc 1 195 13 is_stmt 1 view .LVU13
   97              	.LVL2:
-  98              	.LBB22:
-  99              	.LBB23:
- 180:Galvo/galvo.c ****       uint32_t b;
- 100              		.loc 1 180 7 view .LVU14
- 180:Galvo/galvo.c ****       uint32_t b;
- 101              		.loc 1 180 16 is_stmt 0 view .LVU15
+  98              	.LBB30:
+  99              	.LBB31:
+ 201:Galvo/galvo.c ****       uint32_t b;
+ 100              		.loc 1 201 7 view .LVU14
+ 201:Galvo/galvo.c ****       uint32_t b;
+ 101              		.loc 1 201 16 is_stmt 0 view .LVU15
  102 0018 0D4F     		ldr	r7, .L9+12
- 183:Galvo/galvo.c ****       __DMB();
- 103              		.loc 1 183 7 view .LVU16
+ 204:Galvo/galvo.c ****       __DMB();
+ 103              		.loc 1 204 7 view .LVU16
  104 001a 0E49     		ldr	r1, .L9+16
  105 001c 0E48     		ldr	r0, .L9+20
  106              	.LVL3:
- 180:Galvo/galvo.c ****       uint32_t b;
- 107              		.loc 1 180 16 view .LVU17
+ 201:Galvo/galvo.c ****       uint32_t b;
+ 107              		.loc 1 201 16 view .LVU17
  108 001e 7E68     		ldr	r6, [r7, #4]
  109              	.LVL4:
- 181:Galvo/galvo.c **** 
- 110              		.loc 1 181 7 is_stmt 1 view .LVU18
- 183:Galvo/galvo.c ****       __DMB();
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 7
-
-
- 111              		.loc 1 183 7 view .LVU19
+ 202:Galvo/galvo.c **** 
+ 110              		.loc 1 202 7 is_stmt 1 view .LVU18
+ 204:Galvo/galvo.c ****       __DMB();
+ 111              		.loc 1 204 7 view .LVU19
  112 0020 5022     		movs	r2, #80
  113 0022 FFF7FEFF 		bl	memcpy
  114              	.LVL5:
- 184:Galvo/galvo.c ****       galvo_a_gen = galvo_stage_gen;
- 115              		.loc 1 184 7 view .LVU20
- 116              	.LBB24:
- 117              	.LBI24:
+ 205:Galvo/galvo.c ****       galvo_a_gen = galvo_stage_gen;
+ 115              		.loc 1 205 7 view .LVU20
+ 116              	.LBB32:
+ 117              	.LBI32:
  118              		.file 2 "Drivers/CMSIS/Include/cmsis_gcc.h"
    1:Drivers/CMSIS/Include/cmsis_gcc.h **** /**************************************************************************//**
    2:Drivers/CMSIS/Include/cmsis_gcc.h ****  * @file     cmsis_gcc.h
@@ -397,6 +418,9 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
   25:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __CMSIS_GCC_H
   26:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __CMSIS_GCC_H
   27:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 8
+
+
   28:Drivers/CMSIS/Include/cmsis_gcc.h **** /* ignore some GCC warnings */
   29:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic push
   30:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic ignored "-Wsign-conversion"
@@ -418,9 +442,6 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
   46:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __STATIC_INLINE
   47:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __STATIC_INLINE                        static inline
   48:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 8
-
-
   49:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __STATIC_FORCEINLINE
   50:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __STATIC_FORCEINLINE                   __attribute__((always_inline)) static inline
   51:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
@@ -457,6 +478,9 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
   82:Drivers/CMSIS/Include/cmsis_gcc.h ****   __PACKED_STRUCT T_UINT16_WRITE { uint16_t v; };
   83:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
   84:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT16_WRITE(addr, val)    (void)((((struct T_UINT16_WRITE *)(void *)(addr))-
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 9
+
+
   85:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
   86:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT16_READ
   87:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
@@ -478,9 +502,6 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  103:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
  104:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
  105:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 9
-
-
  106:Drivers/CMSIS/Include/cmsis_gcc.h ****   __PACKED_STRUCT T_UINT32_READ { uint32_t v; };
  107:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
  108:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT32_READ(addr)          (((const struct T_UINT32_READ *)(const void *)(add
@@ -517,6 +538,9 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  139:Drivers/CMSIS/Include/cmsis_gcc.h ****   } __copy_table_t;
  140:Drivers/CMSIS/Include/cmsis_gcc.h **** 
  141:Drivers/CMSIS/Include/cmsis_gcc.h ****   typedef struct {
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 10
+
+
  142:Drivers/CMSIS/Include/cmsis_gcc.h ****     uint32_t* dest;
  143:Drivers/CMSIS/Include/cmsis_gcc.h ****     uint32_t  wlen;
  144:Drivers/CMSIS/Include/cmsis_gcc.h ****   } __zero_table_t;
@@ -538,9 +562,6 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  160:Drivers/CMSIS/Include/cmsis_gcc.h ****     }
  161:Drivers/CMSIS/Include/cmsis_gcc.h ****   }
  162:Drivers/CMSIS/Include/cmsis_gcc.h **** 
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 10
-
-
  163:Drivers/CMSIS/Include/cmsis_gcc.h ****   _start();
  164:Drivers/CMSIS/Include/cmsis_gcc.h **** }
  165:Drivers/CMSIS/Include/cmsis_gcc.h **** 
@@ -577,6 +598,9 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  196:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
  197:Drivers/CMSIS/Include/cmsis_gcc.h **** 
  198:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 11
+
+
  199:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __TZ_set_STACKSEAL_S (uint32_t* stackTop) {
  200:Drivers/CMSIS/Include/cmsis_gcc.h ****   *((uint64_t *)stackTop) = __TZ_STACK_SEAL_VALUE;
  201:Drivers/CMSIS/Include/cmsis_gcc.h **** }
@@ -598,9 +622,6 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  217:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __CMSIS_GCC_USE_REG(r) "l" (r)
  218:Drivers/CMSIS/Include/cmsis_gcc.h **** #else
  219:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __CMSIS_GCC_OUT_REG(r) "=r" (r)
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 11
-
-
  220:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __CMSIS_GCC_RW_REG(r) "+r" (r)
  221:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __CMSIS_GCC_USE_REG(r) "r" (r)
  222:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
@@ -637,6 +658,9 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  253:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Instruction Synchronization Barrier
  254:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Instruction Synchronization Barrier flushes the pipeline in the processor,
  255:Drivers/CMSIS/Include/cmsis_gcc.h ****            so that all instructions following the ISB are fetched from cache or memory,
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 12
+
+
  256:Drivers/CMSIS/Include/cmsis_gcc.h ****            after the instruction has been completed.
  257:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
  258:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __ISB(void)
@@ -658,15 +682,12 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  274:Drivers/CMSIS/Include/cmsis_gcc.h **** 
  275:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
  276:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Data Memory Barrier
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 12
-
-
  277:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Ensures the apparent order of the explicit memory operations before
  278:Drivers/CMSIS/Include/cmsis_gcc.h ****            and after the instruction, without ensuring their completion.
  279:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
  280:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __DMB(void)
  119              		.loc 2 280 27 view .LVU21
- 120              	.LBB25:
+ 120              	.LBB33:
  281:Drivers/CMSIS/Include/cmsis_gcc.h **** {
  282:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("dmb 0xF":::"memory");
  121              		.loc 2 282 3 view .LVU22
@@ -676,61 +697,61 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  125              	@ 0 "" 2
  126              		.thumb
  127              		.syntax unified
- 128              	.LBE25:
- 129              	.LBE24:
- 185:Galvo/galvo.c **** 
- 130              		.loc 1 185 7 view .LVU23
- 185:Galvo/galvo.c **** 
- 131              		.loc 1 185 19 is_stmt 0 view .LVU24
+ 128              	.LBE33:
+ 129              	.LBE32:
+ 206:Galvo/galvo.c **** 
+ 130              		.loc 1 206 7 view .LVU23
+ 206:Galvo/galvo.c **** 
+ 131              		.loc 1 206 19 is_stmt 0 view .LVU24
  132 002a 2B68     		ldr	r3, [r5]
  133 002c 2360     		str	r3, [r4]
- 187:Galvo/galvo.c ****       g_dma_copy_cycles = b - a;
- 134              		.loc 1 187 7 is_stmt 1 view .LVU25
- 187:Galvo/galvo.c ****       g_dma_copy_cycles = b - a;
- 135              		.loc 1 187 9 is_stmt 0 view .LVU26
+ 208:Galvo/galvo.c ****       g_dma_copy_cycles = b - a;
+ 134              		.loc 1 208 7 is_stmt 1 view .LVU25
+ 208:Galvo/galvo.c ****       g_dma_copy_cycles = b - a;
+ 135              		.loc 1 208 9 is_stmt 0 view .LVU26
  136 002e 7B68     		ldr	r3, [r7, #4]
  137              	.LVL6:
- 188:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
- 138              		.loc 1 188 7 is_stmt 1 view .LVU27
- 188:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
- 139              		.loc 1 188 25 is_stmt 0 view .LVU28
+ 209:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
+ 138              		.loc 1 209 7 is_stmt 1 view .LVU27
+ 209:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
+ 139              		.loc 1 209 25 is_stmt 0 view .LVU28
  140 0030 0A49     		ldr	r1, .L9+24
- 189:Galvo/galvo.c ****     }
- 141              		.loc 1 189 30 view .LVU29
+ 210:Galvo/galvo.c ****     }
+ 141              		.loc 1 210 30 view .LVU29
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 13
+
+
  142 0032 0B4A     		ldr	r2, .L9+28
- 188:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
- 143              		.loc 1 188 29 view .LVU30
+ 209:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
+ 143              		.loc 1 209 29 view .LVU30
  144 0034 9E1B     		subs	r6, r3, r6
  145              	.LVL7:
- 188:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
- 146              		.loc 1 188 25 view .LVU31
+ 209:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
+ 146              		.loc 1 209 25 view .LVU31
  147 0036 0E60     		str	r6, [r1]
- 189:Galvo/galvo.c ****     }
- 148              		.loc 1 189 7 is_stmt 1 view .LVU32
- 189:Galvo/galvo.c ****     }
- 149              		.loc 1 189 30 is_stmt 0 view .LVU33
+ 210:Galvo/galvo.c ****     }
+ 148              		.loc 1 210 7 is_stmt 1 view .LVU32
+ 210:Galvo/galvo.c ****     }
+ 149              		.loc 1 210 30 is_stmt 0 view .LVU33
  150 0038 1168     		ldr	r1, [r2]
- 189:Galvo/galvo.c ****     }
- 151              		.loc 1 189 26 view .LVU34
+ 210:Galvo/galvo.c ****     }
+ 151              		.loc 1 210 26 view .LVU34
  152 003a 0A4A     		ldr	r2, .L9+32
- 189:Galvo/galvo.c ****     }
- 153              		.loc 1 189 30 view .LVU35
+ 210:Galvo/galvo.c ****     }
+ 153              		.loc 1 210 30 view .LVU35
  154 003c 5B1A     		subs	r3, r3, r1
  155              	.LVL8:
- 189:Galvo/galvo.c ****     }
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 13
-
-
- 156              		.loc 1 189 26 view .LVU36
+ 210:Galvo/galvo.c ****     }
+ 156              		.loc 1 210 26 view .LVU36
  157 003e 1360     		str	r3, [r2]
  158              	.LVL9:
- 189:Galvo/galvo.c ****     }
- 159              		.loc 1 189 26 view .LVU37
- 160              	.LBE23:
- 161              	.LBE22:
- 162              	.LBE21:
- 192:Galvo/galvo.c **** 
- 163              		.loc 1 192 1 view .LVU38
+ 210:Galvo/galvo.c ****     }
+ 159              		.loc 1 210 26 view .LVU37
+ 160              	.LBE31:
+ 161              	.LBE30:
+ 162              	.LBE29:
+ 213:Galvo/galvo.c **** 
+ 163              		.loc 1 213 1 view .LVU38
  164 0040 F8BD     		pop	{r3, r4, r5, r6, r7, pc}
  165              	.L10:
  166 0042 00BF     		.align	2
@@ -745,7 +766,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  175 0060 00000000 		.word	g_comm_last_rx_cycle
  176 0064 00000000 		.word	g_rx_to_dma_cycles
  177              		.cfi_endproc
- 178              	.LFE138:
+ 178              	.LFE139:
  180              		.section	.text.galvo_dma_cplt_cb,"ax",%progbits
  181              		.align	1
  182              		.p2align 2,,3
@@ -754,16 +775,19 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  185              		.thumb_func
  187              	galvo_dma_cplt_cb:
  188              	.LVL10:
- 189              	.LFB139:
- 196:Galvo/galvo.c ****   if (hdma->Instance == DMA2_Stream5)
- 190              		.loc 1 196 1 is_stmt 1 view -0
+ 189              	.LFB140:
+ 217:Galvo/galvo.c ****   if (hdma->Instance == DMA2_Stream5)
+ 190              		.loc 1 217 1 is_stmt 1 view -0
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 14
+
+
  191              		.cfi_startproc
  192              		@ args = 0, pretend = 0, frame = 0
  193              		@ frame_needed = 0, uses_anonymous_args = 0
- 197:Galvo/galvo.c ****   {
- 194              		.loc 1 197 3 view .LVU40
- 196:Galvo/galvo.c ****   if (hdma->Instance == DMA2_Stream5)
- 195              		.loc 1 196 1 is_stmt 0 view .LVU41
+ 218:Galvo/galvo.c ****   {
+ 194              		.loc 1 218 3 view .LVU40
+ 217:Galvo/galvo.c ****   if (hdma->Instance == DMA2_Stream5)
+ 195              		.loc 1 217 1 is_stmt 0 view .LVU41
  196 0000 F8B5     		push	{r3, r4, r5, r6, r7, lr}
  197              	.LCFI1:
  198              		.cfi_def_cfa_offset 24
@@ -773,134 +797,131 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  202              		.cfi_offset 6, -12
  203              		.cfi_offset 7, -8
  204              		.cfi_offset 14, -4
- 197:Galvo/galvo.c ****   {
- 205              		.loc 1 197 6 view .LVU42
+ 218:Galvo/galvo.c ****   {
+ 205              		.loc 1 218 6 view .LVU42
  206 0002 0268     		ldr	r2, [r0]
  207 0004 0F4B     		ldr	r3, .L15
  208 0006 9A42     		cmp	r2, r3
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 14
-
-
  209 0008 00D0     		beq	.L14
  210              	.L11:
- 213:Galvo/galvo.c **** 
- 211              		.loc 1 213 1 view .LVU43
+ 234:Galvo/galvo.c **** 
+ 211              		.loc 1 234 1 view .LVU43
  212 000a F8BD     		pop	{r3, r4, r5, r6, r7, pc}
  213              	.L14:
- 199:Galvo/galvo.c ****     {
- 214              		.loc 1 199 5 is_stmt 1 view .LVU44
- 199:Galvo/galvo.c ****     {
- 215              		.loc 1 199 21 is_stmt 0 view .LVU45
+ 220:Galvo/galvo.c ****     {
+ 214              		.loc 1 220 5 is_stmt 1 view .LVU44
+ 220:Galvo/galvo.c ****     {
+ 215              		.loc 1 220 21 is_stmt 0 view .LVU45
  216 000c 0E4C     		ldr	r4, .L15+4
  217 000e 0F4D     		ldr	r5, .L15+8
  218 0010 2268     		ldr	r2, [r4]
  219 0012 2B68     		ldr	r3, [r5]
- 199:Galvo/galvo.c ****     {
- 220              		.loc 1 199 8 view .LVU46
+ 220:Galvo/galvo.c ****     {
+ 220              		.loc 1 220 8 view .LVU46
  221 0014 9A42     		cmp	r2, r3
  222 0016 F8D0     		beq	.L11
- 223              	.LBB31:
- 224              	.LBI31:
- 195:Galvo/galvo.c **** {
- 225              		.loc 1 195 13 is_stmt 1 view .LVU47
+ 223              	.LBB39:
+ 224              	.LBI39:
+ 216:Galvo/galvo.c **** {
+ 225              		.loc 1 216 13 is_stmt 1 view .LVU47
  226              	.LVL11:
- 227              	.LBB32:
- 228              	.LBB33:
- 201:Galvo/galvo.c ****       uint32_t b;
- 229              		.loc 1 201 7 view .LVU48
- 201:Galvo/galvo.c ****       uint32_t b;
- 230              		.loc 1 201 16 is_stmt 0 view .LVU49
+ 227              	.LBB40:
+ 228              	.LBB41:
+ 222:Galvo/galvo.c ****       uint32_t b;
+ 229              		.loc 1 222 7 view .LVU48
+ 222:Galvo/galvo.c ****       uint32_t b;
+ 230              		.loc 1 222 16 is_stmt 0 view .LVU49
  231 0018 0D4F     		ldr	r7, .L15+12
- 204:Galvo/galvo.c ****       __DMB();
- 232              		.loc 1 204 7 view .LVU50
+ 225:Galvo/galvo.c ****       __DMB();
+ 232              		.loc 1 225 7 view .LVU50
  233 001a 0E49     		ldr	r1, .L15+16
  234 001c 0E48     		ldr	r0, .L15+20
  235              	.LVL12:
- 201:Galvo/galvo.c ****       uint32_t b;
- 236              		.loc 1 201 16 view .LVU51
+ 222:Galvo/galvo.c ****       uint32_t b;
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 15
+
+
+ 236              		.loc 1 222 16 view .LVU51
  237 001e 7E68     		ldr	r6, [r7, #4]
  238              	.LVL13:
- 202:Galvo/galvo.c **** 
- 239              		.loc 1 202 7 is_stmt 1 view .LVU52
- 204:Galvo/galvo.c ****       __DMB();
- 240              		.loc 1 204 7 view .LVU53
+ 223:Galvo/galvo.c **** 
+ 239              		.loc 1 223 7 is_stmt 1 view .LVU52
+ 225:Galvo/galvo.c ****       __DMB();
+ 240              		.loc 1 225 7 view .LVU53
  241 0020 5022     		movs	r2, #80
  242 0022 FFF7FEFF 		bl	memcpy
  243              	.LVL14:
- 205:Galvo/galvo.c ****       galvo_b_gen = galvo_stage_gen;
- 244              		.loc 1 205 7 view .LVU54
- 245              	.LBB34:
- 246              	.LBI34:
+ 226:Galvo/galvo.c ****       galvo_b_gen = galvo_stage_gen;
+ 244              		.loc 1 226 7 view .LVU54
+ 245              	.LBB42:
+ 246              	.LBI42:
  280:Drivers/CMSIS/Include/cmsis_gcc.h **** {
  247              		.loc 2 280 27 view .LVU55
- 248              	.LBB35:
+ 248              	.LBB43:
  249              		.loc 2 282 3 view .LVU56
  250              		.syntax unified
  251              	@ 282 "Drivers/CMSIS/Include/cmsis_gcc.h" 1
  252 0026 BFF35F8F 		dmb 0xF
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 15
-
-
  253              	@ 0 "" 2
  254              		.thumb
  255              		.syntax unified
- 256              	.LBE35:
- 257              	.LBE34:
- 206:Galvo/galvo.c **** 
- 258              		.loc 1 206 7 view .LVU57
- 206:Galvo/galvo.c **** 
- 259              		.loc 1 206 19 is_stmt 0 view .LVU58
+ 256              	.LBE43:
+ 257              	.LBE42:
+ 227:Galvo/galvo.c **** 
+ 258              		.loc 1 227 7 view .LVU57
+ 227:Galvo/galvo.c **** 
+ 259              		.loc 1 227 19 is_stmt 0 view .LVU58
  260 002a 2B68     		ldr	r3, [r5]
  261 002c 2360     		str	r3, [r4]
- 208:Galvo/galvo.c ****       g_dma_copy_cycles = b - a;
- 262              		.loc 1 208 7 is_stmt 1 view .LVU59
- 208:Galvo/galvo.c ****       g_dma_copy_cycles = b - a;
- 263              		.loc 1 208 9 is_stmt 0 view .LVU60
+ 229:Galvo/galvo.c ****       g_dma_copy_cycles = b - a;
+ 262              		.loc 1 229 7 is_stmt 1 view .LVU59
+ 229:Galvo/galvo.c ****       g_dma_copy_cycles = b - a;
+ 263              		.loc 1 229 9 is_stmt 0 view .LVU60
  264 002e 7B68     		ldr	r3, [r7, #4]
  265              	.LVL15:
- 209:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
- 266              		.loc 1 209 7 is_stmt 1 view .LVU61
- 209:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
- 267              		.loc 1 209 25 is_stmt 0 view .LVU62
+ 230:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
+ 266              		.loc 1 230 7 is_stmt 1 view .LVU61
+ 230:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
+ 267              		.loc 1 230 25 is_stmt 0 view .LVU62
  268 0030 0A49     		ldr	r1, .L15+24
- 210:Galvo/galvo.c ****     }
- 269              		.loc 1 210 30 view .LVU63
+ 231:Galvo/galvo.c ****     }
+ 269              		.loc 1 231 30 view .LVU63
  270 0032 0B4A     		ldr	r2, .L15+28
- 209:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
- 271              		.loc 1 209 29 view .LVU64
+ 230:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
+ 271              		.loc 1 230 29 view .LVU64
  272 0034 9E1B     		subs	r6, r3, r6
  273              	.LVL16:
- 209:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
- 274              		.loc 1 209 25 view .LVU65
+ 230:Galvo/galvo.c ****       g_rx_to_dma_cycles = b - g_comm_last_rx_cycle;
+ 274              		.loc 1 230 25 view .LVU65
  275 0036 0E60     		str	r6, [r1]
- 210:Galvo/galvo.c ****     }
- 276              		.loc 1 210 7 is_stmt 1 view .LVU66
- 210:Galvo/galvo.c ****     }
- 277              		.loc 1 210 30 is_stmt 0 view .LVU67
+ 231:Galvo/galvo.c ****     }
+ 276              		.loc 1 231 7 is_stmt 1 view .LVU66
+ 231:Galvo/galvo.c ****     }
+ 277              		.loc 1 231 30 is_stmt 0 view .LVU67
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 16
+
+
  278 0038 1168     		ldr	r1, [r2]
- 210:Galvo/galvo.c ****     }
- 279              		.loc 1 210 26 view .LVU68
+ 231:Galvo/galvo.c ****     }
+ 279              		.loc 1 231 26 view .LVU68
  280 003a 0A4A     		ldr	r2, .L15+32
- 210:Galvo/galvo.c ****     }
- 281              		.loc 1 210 30 view .LVU69
+ 231:Galvo/galvo.c ****     }
+ 281              		.loc 1 231 30 view .LVU69
  282 003c 5B1A     		subs	r3, r3, r1
  283              	.LVL17:
- 210:Galvo/galvo.c ****     }
- 284              		.loc 1 210 26 view .LVU70
+ 231:Galvo/galvo.c ****     }
+ 284              		.loc 1 231 26 view .LVU70
  285 003e 1360     		str	r3, [r2]
  286              	.LVL18:
- 210:Galvo/galvo.c ****     }
- 287              		.loc 1 210 26 view .LVU71
- 288              	.LBE33:
- 289              	.LBE32:
- 290              	.LBE31:
- 213:Galvo/galvo.c **** 
- 291              		.loc 1 213 1 view .LVU72
+ 231:Galvo/galvo.c ****     }
+ 287              		.loc 1 231 26 view .LVU71
+ 288              	.LBE41:
+ 289              	.LBE40:
+ 290              	.LBE39:
+ 234:Galvo/galvo.c **** 
+ 291              		.loc 1 234 1 view .LVU72
  292 0040 F8BD     		pop	{r3, r4, r5, r6, r7, pc}
  293              	.L16:
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 16
-
-
  294 0042 00BF     		.align	2
  295              	.L15:
  296 0044 88640240 		.word	1073898632
@@ -913,7 +934,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  303 0060 00000000 		.word	g_comm_last_rx_cycle
  304 0064 00000000 		.word	g_rx_to_dma_cycles
  305              		.cfi_endproc
- 306              	.LFE139:
+ 306              	.LFE140:
  308              		.section	.text.galvo_axis_cmd.constprop.0,"ax",%progbits
  309              		.align	1
  310              		.p2align 2,,3
@@ -923,311 +944,311 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  315              	galvo_axis_cmd.constprop.0:
  316              	.LVL19:
  317              	.LFB149:
- 109:Galvo/galvo.c ****                                const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
- 318              		.loc 1 109 17 is_stmt 1 view -0
+ 130:Galvo/galvo.c ****                                const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
+ 318              		.loc 1 130 17 is_stmt 1 view -0
  319              		.cfi_startproc
  320              		@ args = 0, pretend = 0, frame = 0
  321              		@ frame_needed = 0, uses_anonymous_args = 0
- 113:Galvo/galvo.c ****   int32_t cmd;
- 322              		.loc 1 113 3 view .LVU74
- 323              	.LBB38:
- 324              	.LBB39:
-  77:Galvo/galvo.c ****   if (ay > 32767U) { ay = 32767U; }
- 325              		.loc 1 77 6 is_stmt 0 view .LVU75
+ 134:Galvo/galvo.c ****   int32_t cmd;
+ 322              		.loc 1 134 3 view .LVU74
+ 323              	.LBB46:
+ 324              	.LBB47:
+  98:Galvo/galvo.c ****   if (ay > 32767U) { ay = 32767U; }
+ 325              		.loc 1 98 6 is_stmt 0 view .LVU75
  326 0000 47F6FF7C 		movw	ip, #32767
-  78:Galvo/galvo.c **** 
- 327              		.loc 1 78 6 view .LVU76
+  99:Galvo/galvo.c **** 
+ 327              		.loc 1 99 6 view .LVU76
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 17
+
+
  328 0004 6245     		cmp	r2, ip
  329 0006 28BF     		it	cs
  330 0008 6246     		movcs	r2, ip
  331              	.LVL20:
-  77:Galvo/galvo.c ****   if (ay > 32767U) { ay = 32767U; }
- 332              		.loc 1 77 6 view .LVU77
+  98:Galvo/galvo.c ****   if (ay > 32767U) { ay = 32767U; }
+ 332              		.loc 1 98 6 view .LVU77
  333 000a 8C45     		cmp	ip, r1
  334 000c 28BF     		it	cs
  335 000e 8C46     		movcs	ip, r1
- 336              	.LBE39:
- 337              	.LBE38:
- 113:Galvo/galvo.c ****   int32_t cmd;
- 338              		.loc 1 113 15 view .LVU78
+ 336              	.LBE47:
+ 337              	.LBE46:
+ 134:Galvo/galvo.c ****   int32_t cmd;
+ 338              		.loc 1 134 15 view .LVU78
  339 0010 07EE901A 		vmov	s15, r1	@ int
- 340              	.LBB45:
- 341              	.LBB40:
-  80:Galvo/galvo.c ****   iy = ay >> 8;
- 342              		.loc 1 80 6 view .LVU79
+ 340              	.LBB53:
+ 341              	.LBB48:
+ 101:Galvo/galvo.c ****   iy = ay >> 8;
+ 342              		.loc 1 101 6 view .LVU79
  343 0014 4FEA1C21 		lsr	r1, ip, #8
  344              	.LVL21:
-  84:Galvo/galvo.c ****   if (iy > (GALVO_LUT_SIZE - 2U)) { iy = GALVO_LUT_SIZE - 2U; }
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 17
-
-
- 345              		.loc 1 84 6 view .LVU80
+ 105:Galvo/galvo.c ****   if (iy > (GALVO_LUT_SIZE - 2U)) { iy = GALVO_LUT_SIZE - 2U; }
+ 345              		.loc 1 105 6 view .LVU80
  346 0018 7E29     		cmp	r1, #126
  347 001a 28BF     		it	cs
  348 001c 7E21     		movcs	r1, #126
- 349              	.LBE40:
- 350              	.LBE45:
- 113:Galvo/galvo.c ****   int32_t cmd;
- 351              		.loc 1 113 15 view .LVU81
+ 349              	.LBE48:
+ 350              	.LBE53:
+ 134:Galvo/galvo.c ****   int32_t cmd;
+ 351              		.loc 1 134 15 view .LVU81
  352 001e F8EEE77A 		vcvt.f32.s32	s15, s15
  353              	.LVL22:
- 113:Galvo/galvo.c ****   int32_t cmd;
- 354              		.loc 1 113 25 view .LVU82
+ 134:Galvo/galvo.c ****   int32_t cmd;
+ 354              		.loc 1 134 25 view .LVU82
  355 0022 9FED387A 		vldr.32	s14, .L20
- 356              	.LBB46:
- 357              	.LBB41:
-  87:Galvo/galvo.c ****   fy = (float)(ay - (iy << 8)) * (1.0f / 256.0f);
- 358              		.loc 1 87 6 view .LVU83
+ 356              	.LBB54:
+ 357              	.LBB49:
+ 108:Galvo/galvo.c ****   fy = (float)(ay - (iy << 8)) * (1.0f / 256.0f);
+ 358              		.loc 1 108 6 view .LVU83
  359 0026 DFED386A 		vldr.32	s13, .L20+4
- 360              	.LBE41:
- 361              	.LBE46:
- 113:Galvo/galvo.c ****   int32_t cmd;
- 362              		.loc 1 113 9 discriminator 1 view .LVU84
+ 360              	.LBE49:
+ 361              	.LBE54:
+ 134:Galvo/galvo.c ****   int32_t cmd;
+ 362              		.loc 1 134 9 discriminator 1 view .LVU84
  363 002a DFED383A 		vldr.32	s7, .L20+8
- 118:Galvo/galvo.c **** 
- 364              		.loc 1 118 9 view .LVU85
+ 139:Galvo/galvo.c **** 
+ 364              		.loc 1 139 9 view .LVU85
  365 002e 9FED380A 		vldr.32	s0, .L20+12
- 366              	.LBB47:
- 367              	.LBB42:
-  87:Galvo/galvo.c ****   fy = (float)(ay - (iy << 8)) * (1.0f / 256.0f);
- 368              		.loc 1 87 19 view .LVU86
+ 366              	.LBB55:
+ 367              	.LBB50:
+ 108:Galvo/galvo.c ****   fy = (float)(ay - (iy << 8)) * (1.0f / 256.0f);
+ 368              		.loc 1 108 19 view .LVU86
  369 0032 ACEB012C 		sub	ip, ip, r1, lsl #8
- 370              	.LBE42:
- 371              	.LBE47:
- 113:Galvo/galvo.c ****   int32_t cmd;
- 372              		.loc 1 113 25 view .LVU87
+ 370              	.LBE50:
+ 371              	.LBE55:
+ 134:Galvo/galvo.c ****   int32_t cmd;
+ 372              		.loc 1 134 25 view .LVU87
  373 0036 87EE874A 		vdiv.f32	s8, s15, s14
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 18
+
+
  374              	.LVL23:
- 375              	.LBB48:
- 376              	.LBI38:
-  71:Galvo/galvo.c ****                               uint32_t ax, uint32_t ay)
- 377              		.loc 1 71 14 is_stmt 1 view .LVU88
- 378              	.LBB43:
-  74:Galvo/galvo.c ****   float fx, fy, v00, v10, v01, v11, top, bot;
- 379              		.loc 1 74 3 view .LVU89
-  75:Galvo/galvo.c **** 
- 380              		.loc 1 75 3 view .LVU90
-  77:Galvo/galvo.c ****   if (ay > 32767U) { ay = 32767U; }
- 381              		.loc 1 77 3 view .LVU91
-  78:Galvo/galvo.c **** 
- 382              		.loc 1 78 3 view .LVU92
-  80:Galvo/galvo.c ****   iy = ay >> 8;
- 383              		.loc 1 80 3 view .LVU93
-  81:Galvo/galvo.c **** 
- 384              		.loc 1 81 3 view .LVU94
-  84:Galvo/galvo.c ****   if (iy > (GALVO_LUT_SIZE - 2U)) { iy = GALVO_LUT_SIZE - 2U; }
- 385              		.loc 1 84 3 view .LVU95
-  85:Galvo/galvo.c **** 
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 18
-
-
- 386              		.loc 1 85 3 view .LVU96
+ 375              	.LBB56:
+ 376              	.LBI46:
+  92:Galvo/galvo.c ****                               uint32_t ax, uint32_t ay)
+ 377              		.loc 1 92 14 is_stmt 1 view .LVU88
+ 378              	.LBB51:
+  95:Galvo/galvo.c ****   float fx, fy, v00, v10, v01, v11, top, bot;
+ 379              		.loc 1 95 3 view .LVU89
+  96:Galvo/galvo.c **** 
+ 380              		.loc 1 96 3 view .LVU90
+  98:Galvo/galvo.c ****   if (ay > 32767U) { ay = 32767U; }
+ 381              		.loc 1 98 3 view .LVU91
+  99:Galvo/galvo.c **** 
+ 382              		.loc 1 99 3 view .LVU92
+ 101:Galvo/galvo.c ****   iy = ay >> 8;
+ 383              		.loc 1 101 3 view .LVU93
+ 102:Galvo/galvo.c **** 
+ 384              		.loc 1 102 3 view .LVU94
+ 105:Galvo/galvo.c ****   if (iy > (GALVO_LUT_SIZE - 2U)) { iy = GALVO_LUT_SIZE - 2U; }
+ 385              		.loc 1 105 3 view .LVU95
+ 106:Galvo/galvo.c **** 
+ 386              		.loc 1 106 3 view .LVU96
  387 003a 4900     		lsls	r1, r1, #1
  388              	.LVL24:
-  85:Galvo/galvo.c **** 
- 389              		.loc 1 85 3 is_stmt 0 view .LVU97
- 390              	.LBE43:
- 391              	.LBE48:
- 109:Galvo/galvo.c ****                                const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
- 392              		.loc 1 109 17 view .LVU98
+ 106:Galvo/galvo.c **** 
+ 389              		.loc 1 106 3 is_stmt 0 view .LVU97
+ 390              	.LBE51:
+ 391              	.LBE56:
+ 130:Galvo/galvo.c ****                                const int16_t lut[GALVO_LUT_SIZE][GALVO_LUT_SIZE],
+ 392              		.loc 1 130 17 view .LVU98
  393 003c 08B5     		push	{r3, lr}
  394              	.LCFI2:
  395              		.cfi_def_cfa_offset 8
  396              		.cfi_offset 3, -8
  397              		.cfi_offset 14, -4
- 398              	.LBB49:
- 399              	.LBB44:
-  87:Galvo/galvo.c ****   fy = (float)(ay - (iy << 8)) * (1.0f / 256.0f);
- 400              		.loc 1 87 19 view .LVU99
+ 398              	.LBB57:
+ 399              	.LBB52:
+ 108:Galvo/galvo.c ****   fy = (float)(ay - (iy << 8)) * (1.0f / 256.0f);
+ 400              		.loc 1 108 19 view .LVU99
  401 003e 07EE90CA 		vmov	s15, ip	@ int
-  81:Galvo/galvo.c **** 
- 402              		.loc 1 81 6 view .LVU100
+ 102:Galvo/galvo.c **** 
+ 402              		.loc 1 102 6 view .LVU100
  403 0042 4FEA122C 		lsr	ip, r2, #8
  404              	.LVL25:
-  85:Galvo/galvo.c **** 
- 405              		.loc 1 85 6 view .LVU101
+ 106:Galvo/galvo.c **** 
+ 405              		.loc 1 106 6 view .LVU101
  406 0046 BCF17E0F 		cmp	ip, #126
  407              	.LVL26:
-  85:Galvo/galvo.c **** 
- 408              		.loc 1 85 6 view .LVU102
+ 106:Galvo/galvo.c **** 
+ 408              		.loc 1 106 6 view .LVU102
  409 004a 28BF     		it	cs
  410 004c 4FF07E0C 		movcs	ip, #126
  411              	.LVL27:
-  87:Galvo/galvo.c ****   fy = (float)(ay - (iy << 8)) * (1.0f / 256.0f);
- 412              		.loc 1 87 3 is_stmt 1 view .LVU103
-  88:Galvo/galvo.c ****   if (fx > 1.0f) { fx = 1.0f; }
- 413              		.loc 1 88 19 is_stmt 0 view .LVU104
+ 108:Galvo/galvo.c ****   fy = (float)(ay - (iy << 8)) * (1.0f / 256.0f);
+ 412              		.loc 1 108 3 is_stmt 1 view .LVU103
+ 109:Galvo/galvo.c ****   if (fx > 1.0f) { fx = 1.0f; }
+ 413              		.loc 1 109 19 is_stmt 0 view .LVU104
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 19
+
+
  414 0050 A2EB0C22 		sub	r2, r2, ip, lsl #8
  415              	.LVL28:
-  88:Galvo/galvo.c ****   if (fx > 1.0f) { fx = 1.0f; }
- 416              		.loc 1 88 19 view .LVU105
+ 109:Galvo/galvo.c ****   if (fx > 1.0f) { fx = 1.0f; }
+ 416              		.loc 1 109 19 view .LVU105
  417 0054 07EE102A 		vmov	s14, r2	@ int
  418 0058 01EB0C22 		add	r2, r1, ip, lsl #8
-  94:Galvo/galvo.c ****   v11 = (float)lut[iy + 1U][ix + 1U];
- 419              		.loc 1 94 19 view .LVU106
+ 115:Galvo/galvo.c ****   v11 = (float)lut[iy + 1U][ix + 1U];
+ 419              		.loc 1 115 19 view .LVU106
  420 005c 0CF1010C 		add	ip, ip, #1
  421              	.LVL29:
-  94:Galvo/galvo.c ****   v11 = (float)lut[iy + 1U][ix + 1U];
- 422              		.loc 1 94 19 view .LVU107
+ 115:Galvo/galvo.c ****   v11 = (float)lut[iy + 1U][ix + 1U];
+ 422              		.loc 1 115 19 view .LVU107
  423 0060 01EB0C21 		add	r1, r1, ip, lsl #8
  424 0064 03EB010C 		add	ip, r3, r1
  425              	.LVL30:
-  94:Galvo/galvo.c ****   v11 = (float)lut[iy + 1U][ix + 1U];
- 426              		.loc 1 94 7 view .LVU108
+ 115:Galvo/galvo.c ****   v11 = (float)lut[iy + 1U][ix + 1U];
+ 426              		.loc 1 115 7 view .LVU108
  427 0068 595E     		ldrsh	r1, [r3, r1]
  428 006a 06EE101A 		vmov	s12, r1	@ int
-  95:Galvo/galvo.c **** 
- 429              		.loc 1 95 7 view .LVU109
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 19
-
-
+ 116:Galvo/galvo.c **** 
+ 429              		.loc 1 116 7 view .LVU109
  430 006e BCF90210 		ldrsh	r1, [ip, #2]
-  87:Galvo/galvo.c ****   fy = (float)(ay - (iy << 8)) * (1.0f / 256.0f);
- 431              		.loc 1 87 8 view .LVU110
+ 108:Galvo/galvo.c ****   fy = (float)(ay - (iy << 8)) * (1.0f / 256.0f);
+ 431              		.loc 1 108 8 view .LVU110
  432 0072 F8EE677A 		vcvt.f32.u32	s15, s15
-  95:Galvo/galvo.c **** 
- 433              		.loc 1 95 7 view .LVU111
+ 116:Galvo/galvo.c **** 
+ 433              		.loc 1 116 7 view .LVU111
  434 0076 04EE901A 		vmov	s9, r1	@ int
-  88:Galvo/galvo.c ****   if (fx > 1.0f) { fx = 1.0f; }
- 435              		.loc 1 88 8 view .LVU112
+ 109:Galvo/galvo.c ****   if (fx > 1.0f) { fx = 1.0f; }
+ 435              		.loc 1 109 8 view .LVU112
  436 007a B8EE477A 		vcvt.f32.u32	s14, s14
  437 007e 9918     		adds	r1, r3, r2
-  92:Galvo/galvo.c ****   v10 = (float)lut[iy][ix + 1U];
- 438              		.loc 1 92 7 view .LVU113
+ 113:Galvo/galvo.c ****   v10 = (float)lut[iy][ix + 1U];
+ 438              		.loc 1 113 7 view .LVU113
  439 0080 9B5E     		ldrsh	r3, [r3, r2]
  440              	.LVL31:
-  88:Galvo/galvo.c ****   if (fx > 1.0f) { fx = 1.0f; }
- 441              		.loc 1 88 6 view .LVU114
+ 109:Galvo/galvo.c ****   if (fx > 1.0f) { fx = 1.0f; }
+ 441              		.loc 1 109 6 view .LVU114
  442 0082 27EE267A 		vmul.f32	s14, s14, s13
-  87:Galvo/galvo.c ****   fy = (float)(ay - (iy << 8)) * (1.0f / 256.0f);
- 443              		.loc 1 87 6 view .LVU115
+ 108:Galvo/galvo.c ****   fy = (float)(ay - (iy << 8)) * (1.0f / 256.0f);
+ 443              		.loc 1 108 6 view .LVU115
  444 0086 67EEA67A 		vmul.f32	s15, s15, s13
  445              	.LVL32:
-  88:Galvo/galvo.c ****   if (fx > 1.0f) { fx = 1.0f; }
- 446              		.loc 1 88 3 is_stmt 1 view .LVU116
-  92:Galvo/galvo.c ****   v10 = (float)lut[iy][ix + 1U];
- 447              		.loc 1 92 7 is_stmt 0 view .LVU117
+ 109:Galvo/galvo.c ****   if (fx > 1.0f) { fx = 1.0f; }
+ 446              		.loc 1 109 3 is_stmt 1 view .LVU116
+ 113:Galvo/galvo.c ****   v10 = (float)lut[iy][ix + 1U];
+ 447              		.loc 1 113 7 is_stmt 0 view .LVU117
  448 008a 06EE903A 		vmov	s13, r3	@ int
-  93:Galvo/galvo.c ****   v01 = (float)lut[iy + 1U][ix];
- 449              		.loc 1 93 7 view .LVU118
+ 114:Galvo/galvo.c ****   v01 = (float)lut[iy + 1U][ix];
+ 449              		.loc 1 114 7 view .LVU118
  450 008e B1F90230 		ldrsh	r3, [r1, #2]
  451 0092 05EE103A 		vmov	s10, r3	@ int
  452 0096 F7EE005A 		vmov.f32	s11, #1.0e+0
-  94:Galvo/galvo.c ****   v11 = (float)lut[iy + 1U][ix + 1U];
- 453              		.loc 1 94 7 view .LVU119
+ 115:Galvo/galvo.c ****   v11 = (float)lut[iy + 1U][ix + 1U];
+ 453              		.loc 1 115 7 view .LVU119
  454 009a B8EEC66A 		vcvt.f32.s32	s12, s12
-  92:Galvo/galvo.c ****   v10 = (float)lut[iy][ix + 1U];
- 455              		.loc 1 92 7 view .LVU120
+ 113:Galvo/galvo.c ****   v10 = (float)lut[iy][ix + 1U];
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 20
+
+
+ 455              		.loc 1 113 7 view .LVU120
  456 009e F8EEE66A 		vcvt.f32.s32	s13, s13
-  95:Galvo/galvo.c **** 
- 457              		.loc 1 95 7 view .LVU121
+ 116:Galvo/galvo.c **** 
+ 457              		.loc 1 116 7 view .LVU121
  458 00a2 F8EEE44A 		vcvt.f32.s32	s9, s9
-  93:Galvo/galvo.c ****   v01 = (float)lut[iy + 1U][ix];
- 459              		.loc 1 93 7 view .LVU122
+ 114:Galvo/galvo.c ****   v01 = (float)lut[iy + 1U][ix];
+ 459              		.loc 1 114 7 view .LVU122
  460 00a6 B8EEC55A 		vcvt.f32.s32	s10, s10
  461 00aa F4EEE57A 		vcmpe.f32	s15, s11
-  98:Galvo/galvo.c ****   return (top + (bot - top) * fy) * GALVO_LUT_UNIT;
- 462              		.loc 1 98 20 view .LVU123
+ 119:Galvo/galvo.c ****   return (top + (bot - top) * fy) * GALVO_LUT_UNIT;
+ 462              		.loc 1 119 20 view .LVU123
  463 00ae 74EEC64A 		vsub.f32	s9, s9, s12
-  97:Galvo/galvo.c ****   bot = v01 + (v11 - v01) * fx;
- 464              		.loc 1 97 20 view .LVU124
+ 118:Galvo/galvo.c ****   bot = v01 + (v11 - v01) * fx;
+ 464              		.loc 1 118 20 view .LVU124
  465 00b2 35EE665A 		vsub.f32	s10, s10, s13
  466 00b6 F1EE10FA 		vmrs	APSR_nzcv, FPSCR
  467              	.LVL33:
-  97:Galvo/galvo.c ****   bot = v01 + (v11 - v01) * fx;
- 468              		.loc 1 97 20 view .LVU125
+ 118:Galvo/galvo.c ****   bot = v01 + (v11 - v01) * fx;
+ 468              		.loc 1 118 20 view .LVU125
  469 00ba C8BF     		it	gt
  470 00bc F0EE657A 		vmovgt.f32	s15, s11
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 20
-
-
  471              	.LVL34:
-  89:Galvo/galvo.c ****   if (fy > 1.0f) { fy = 1.0f; }
- 472              		.loc 1 89 3 is_stmt 1 view .LVU126
-  90:Galvo/galvo.c **** 
- 473              		.loc 1 90 3 view .LVU127
-  97:Galvo/galvo.c ****   bot = v01 + (v11 - v01) * fx;
- 474              		.loc 1 97 7 is_stmt 0 view .LVU128
+ 110:Galvo/galvo.c ****   if (fy > 1.0f) { fy = 1.0f; }
+ 472              		.loc 1 110 3 is_stmt 1 view .LVU126
+ 111:Galvo/galvo.c **** 
+ 473              		.loc 1 111 3 view .LVU127
+ 118:Galvo/galvo.c ****   bot = v01 + (v11 - v01) * fx;
+ 474              		.loc 1 118 7 is_stmt 0 view .LVU128
  475 00c0 E7EE856A 		vfma.f32	s13, s15, s10
-  98:Galvo/galvo.c ****   return (top + (bot - top) * fy) * GALVO_LUT_UNIT;
- 476              		.loc 1 98 7 view .LVU129
+ 119:Galvo/galvo.c ****   return (top + (bot - top) * fy) * GALVO_LUT_UNIT;
+ 476              		.loc 1 119 7 view .LVU129
  477 00c4 A7EEA46A 		vfma.f32	s12, s15, s9
  478 00c8 B4EEE57A 		vcmpe.f32	s14, s11
  479 00cc F1EE10FA 		vmrs	APSR_nzcv, FPSCR
-  99:Galvo/galvo.c **** }
- 480              		.loc 1 99 22 view .LVU130
+ 120:Galvo/galvo.c **** }
+ 480              		.loc 1 120 22 view .LVU130
  481 00d0 36EE666A 		vsub.f32	s12, s12, s13
  482 00d4 D8BF     		it	le
  483 00d6 F0EE475A 		vmovle.f32	s11, s14
  484              	.LVL35:
-  92:Galvo/galvo.c ****   v10 = (float)lut[iy][ix + 1U];
- 485              		.loc 1 92 3 is_stmt 1 view .LVU131
-  93:Galvo/galvo.c ****   v01 = (float)lut[iy + 1U][ix];
- 486              		.loc 1 93 3 view .LVU132
-  94:Galvo/galvo.c ****   v11 = (float)lut[iy + 1U][ix + 1U];
- 487              		.loc 1 94 3 view .LVU133
-  95:Galvo/galvo.c **** 
- 488              		.loc 1 95 3 view .LVU134
-  97:Galvo/galvo.c ****   bot = v01 + (v11 - v01) * fx;
- 489              		.loc 1 97 3 view .LVU135
-  98:Galvo/galvo.c ****   return (top + (bot - top) * fy) * GALVO_LUT_UNIT;
- 490              		.loc 1 98 3 view .LVU136
-  99:Galvo/galvo.c **** }
- 491              		.loc 1 99 3 view .LVU137
-  99:Galvo/galvo.c **** }
- 492              		.loc 1 99 15 is_stmt 0 view .LVU138
- 493 00da E5EE866A 		vfma.f32	s13, s11, s12
- 494              	.LVL36:
-  99:Galvo/galvo.c **** }
- 495              		.loc 1 99 15 view .LVU139
- 496              	.LBE44:
- 497              	.LBE49:
+ 113:Galvo/galvo.c ****   v10 = (float)lut[iy][ix + 1U];
+ 485              		.loc 1 113 3 is_stmt 1 view .LVU131
+ 114:Galvo/galvo.c ****   v01 = (float)lut[iy + 1U][ix];
+ 486              		.loc 1 114 3 view .LVU132
+ 115:Galvo/galvo.c ****   v11 = (float)lut[iy + 1U][ix + 1U];
+ 487              		.loc 1 115 3 view .LVU133
  116:Galvo/galvo.c **** 
- 498              		.loc 1 116 6 view .LVU140
+ 488              		.loc 1 116 3 view .LVU134
+ 118:Galvo/galvo.c ****   bot = v01 + (v11 - v01) * fx;
+ 489              		.loc 1 118 3 view .LVU135
+ 119:Galvo/galvo.c ****   return (top + (bot - top) * fy) * GALVO_LUT_UNIT;
+ 490              		.loc 1 119 3 view .LVU136
+ 120:Galvo/galvo.c **** }
+ 491              		.loc 1 120 3 view .LVU137
+ 120:Galvo/galvo.c **** }
+ 492              		.loc 1 120 15 is_stmt 0 view .LVU138
+ 493 00da E5EE866A 		vfma.f32	s13, s11, s12
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 21
+
+
+ 494              	.LVL36:
+ 120:Galvo/galvo.c **** }
+ 495              		.loc 1 120 15 view .LVU139
+ 496              	.LBE52:
+ 497              	.LBE57:
+ 137:Galvo/galvo.c **** 
+ 498              		.loc 1 137 6 view .LVU140
  499 00de 0028     		cmp	r0, #0
- 113:Galvo/galvo.c ****   int32_t cmd;
- 500              		.loc 1 113 9 discriminator 1 view .LVU141
+ 134:Galvo/galvo.c ****   int32_t cmd;
+ 500              		.loc 1 134 9 discriminator 1 view .LVU141
  501 00e0 F0EE447A 		vmov.f32	s15, s8
  502 00e4 E6EEA37A 		vfma.f32	s15, s13, s7
  503              	.LVL37:
- 114:Galvo/galvo.c **** 
- 504              		.loc 1 114 3 is_stmt 1 view .LVU142
- 116:Galvo/galvo.c **** 
- 505              		.loc 1 116 3 view .LVU143
- 116:Galvo/galvo.c **** 
- 506              		.loc 1 116 16 discriminator 1 view .LVU144
- 118:Galvo/galvo.c **** 
- 507              		.loc 1 118 9 is_stmt 0 view .LVU145
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 21
-
-
+ 135:Galvo/galvo.c **** 
+ 504              		.loc 1 135 3 is_stmt 1 view .LVU142
+ 137:Galvo/galvo.c **** 
+ 505              		.loc 1 137 3 view .LVU143
+ 137:Galvo/galvo.c **** 
+ 506              		.loc 1 137 16 discriminator 1 view .LVU144
+ 139:Galvo/galvo.c **** 
+ 507              		.loc 1 139 9 is_stmt 0 view .LVU145
  508 00e8 9FED067A 		vldr.32	s14, .L20
- 116:Galvo/galvo.c **** 
- 509              		.loc 1 116 20 discriminator 1 view .LVU146
+ 137:Galvo/galvo.c **** 
+ 509              		.loc 1 137 20 discriminator 1 view .LVU146
  510 00ec B8BF     		it	lt
  511 00ee F1EE677A 		vneglt.f32	s15, s15
  512              	.LVL38:
- 118:Galvo/galvo.c **** 
- 513              		.loc 1 118 3 is_stmt 1 view .LVU147
- 118:Galvo/galvo.c **** 
- 514              		.loc 1 118 9 is_stmt 0 view .LVU148
+ 139:Galvo/galvo.c **** 
+ 513              		.loc 1 139 3 is_stmt 1 view .LVU147
+ 139:Galvo/galvo.c **** 
+ 514              		.loc 1 139 9 is_stmt 0 view .LVU148
  515 00f2 A7EE870A 		vfma.f32	s0, s15, s14
  516 00f6 FFF7FEFF 		bl	lroundf
  517              	.LVL39:
- 120:Galvo/galvo.c ****   if (cmd > 65535)  { cmd = 65535; }
- 518              		.loc 1 120 3 is_stmt 1 view .LVU149
- 123:Galvo/galvo.c **** }
- 519              		.loc 1 123 3 view .LVU150
- 120:Galvo/galvo.c ****   if (cmd > 65535)  { cmd = 65535; }
- 520              		.loc 1 120 6 is_stmt 0 view .LVU151
+ 141:Galvo/galvo.c ****   if (cmd > 65535)  { cmd = 65535; }
+ 518              		.loc 1 141 3 is_stmt 1 view .LVU149
+ 144:Galvo/galvo.c **** }
+ 519              		.loc 1 144 3 view .LVU150
+ 141:Galvo/galvo.c ****   if (cmd > 65535)  { cmd = 65535; }
+ 520              		.loc 1 141 6 is_stmt 0 view .LVU151
  521 00fa 80F31000 		usat	r0, #16, r0
  522              	.LVL40:
- 124:Galvo/galvo.c **** 
- 523              		.loc 1 124 1 view .LVU152
+ 145:Galvo/galvo.c **** 
+ 523              		.loc 1 145 1 view .LVU152
  524 00fe 80B2     		uxth	r0, r0
  525              	.LVL41:
- 124:Galvo/galvo.c **** 
- 526              		.loc 1 124 1 view .LVU153
+ 145:Galvo/galvo.c **** 
+ 526              		.loc 1 145 1 view .LVU153
  527 0100 08BD     		pop	{r3, pc}
  528              	.L21:
  529 0102 00BF     		.align	2
@@ -1237,6 +1258,9 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  533 010c BD378635 		.word	897988541
  534 0110 00000047 		.word	1191182336
  535              		.cfi_endproc
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 22
+
+
  536              	.LFE149:
  538              		.section	.text.galvo_build_stage.constprop.0,"ax",%progbits
  539              		.align	1
@@ -1247,20 +1271,17 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  545              	galvo_build_stage.constprop.0:
  546              	.LVL42:
  547              	.LFB150:
- 129:Galvo/galvo.c **** {
- 548              		.loc 1 129 13 is_stmt 1 view -0
+ 150:Galvo/galvo.c **** {
+ 548              		.loc 1 150 13 is_stmt 1 view -0
  549              		.cfi_startproc
  550              		@ args = 0, pretend = 0, frame = 0
  551              		@ frame_needed = 0, uses_anonymous_args = 0
- 131:Galvo/galvo.c ****   uint32_t ay = (uint32_t)(y < 0 ? -(int32_t)y : (int32_t)y);
- 552              		.loc 1 131 3 view .LVU155
- 129:Galvo/galvo.c **** {
- 553              		.loc 1 129 13 is_stmt 0 view .LVU156
+ 152:Galvo/galvo.c ****   uint32_t ay = (uint32_t)(y < 0 ? -(int32_t)y : (int32_t)y);
+ 552              		.loc 1 152 3 view .LVU155
+ 150:Galvo/galvo.c **** {
+ 553              		.loc 1 150 13 is_stmt 0 view .LVU156
  554 0000 2DE9F843 		push	{r3, r4, r5, r6, r7, r8, r9, lr}
  555              	.LCFI3:
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 22
-
-
  556              		.cfi_def_cfa_offset 32
  557              		.cfi_offset 3, -32
  558              		.cfi_offset 4, -28
@@ -1270,248 +1291,248 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  562              		.cfi_offset 8, -12
  563              		.cfi_offset 9, -8
  564              		.cfi_offset 14, -4
- 131:Galvo/galvo.c ****   uint32_t ay = (uint32_t)(y < 0 ? -(int32_t)y : (int32_t)y);
- 565              		.loc 1 131 17 discriminator 1 view .LVU157
+ 152:Galvo/galvo.c ****   uint32_t ay = (uint32_t)(y < 0 ? -(int32_t)y : (int32_t)y);
+ 565              		.loc 1 152 17 discriminator 1 view .LVU157
  566 0004 80EAE075 		eor	r5, r0, r0, asr #31
- 132:Galvo/galvo.c **** 
- 567              		.loc 1 132 17 discriminator 1 view .LVU158
+ 153:Galvo/galvo.c **** 
+ 567              		.loc 1 153 17 discriminator 1 view .LVU158
  568 0008 81EAE177 		eor	r7, r1, r1, asr #31
- 131:Galvo/galvo.c ****   uint32_t ay = (uint32_t)(y < 0 ? -(int32_t)y : (int32_t)y);
- 569              		.loc 1 131 17 discriminator 1 view .LVU159
+ 152:Galvo/galvo.c ****   uint32_t ay = (uint32_t)(y < 0 ? -(int32_t)y : (int32_t)y);
+ 569              		.loc 1 152 17 discriminator 1 view .LVU159
  570 000c A5EBE075 		sub	r5, r5, r0, asr #31
  571              	.LVL43:
- 132:Galvo/galvo.c **** 
- 572              		.loc 1 132 3 is_stmt 1 view .LVU160
- 132:Galvo/galvo.c **** 
- 573              		.loc 1 132 17 is_stmt 0 discriminator 1 view .LVU161
+ 153:Galvo/galvo.c **** 
+ 572              		.loc 1 153 3 is_stmt 1 view .LVU160
+ 153:Galvo/galvo.c **** 
+ 573              		.loc 1 153 17 is_stmt 0 discriminator 1 view .LVU161
  574 0010 A7EBE177 		sub	r7, r7, r1, asr #31
  575              	.LVL44:
- 134:Galvo/galvo.c ****   uint16_t cy = galvo_axis_cmd(y, ax, ay, galvo_lut_beta,  GALVO_BETA0);
- 576              		.loc 1 134 3 is_stmt 1 view .LVU162
- 129:Galvo/galvo.c **** {
- 577              		.loc 1 129 13 is_stmt 0 view .LVU163
+ 155:Galvo/galvo.c ****   uint16_t cy = galvo_axis_cmd(y, ax, ay, galvo_lut_beta,  GALVO_BETA0);
+ 576              		.loc 1 155 3 is_stmt 1 view .LVU162
+ 150:Galvo/galvo.c **** {
+ 577              		.loc 1 150 13 is_stmt 0 view .LVU163
  578 0014 0C46     		mov	r4, r1
- 134:Galvo/galvo.c ****   uint16_t cy = galvo_axis_cmd(y, ax, ay, galvo_lut_beta,  GALVO_BETA0);
- 579              		.loc 1 134 17 view .LVU164
+ 155:Galvo/galvo.c ****   uint16_t cy = galvo_axis_cmd(y, ax, ay, galvo_lut_beta,  GALVO_BETA0);
+ 579              		.loc 1 155 17 view .LVU164
  580 0016 3A46     		mov	r2, r7
  581 0018 2946     		mov	r1, r5
  582              	.LVL45:
- 134:Galvo/galvo.c ****   uint16_t cy = galvo_axis_cmd(y, ax, ay, galvo_lut_beta,  GALVO_BETA0);
- 583              		.loc 1 134 17 view .LVU165
+ 155:Galvo/galvo.c ****   uint16_t cy = galvo_axis_cmd(y, ax, ay, galvo_lut_beta,  GALVO_BETA0);
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 23
+
+
+ 583              		.loc 1 155 17 view .LVU165
  584 001a 254B     		ldr	r3, .L36
- 585              	.LBB56:
- 586              	.LBB57:
- 587              	.LBB58:
- 588              	.LBB59:
- 165:Galvo/galvo.c ****   }
- 589              		.loc 1 165 37 discriminator 2 view .LVU166
+ 585              	.LBB64:
+ 586              	.LBB65:
+ 587              	.LBB66:
+ 588              	.LBB67:
+ 186:Galvo/galvo.c ****   }
+ 589              		.loc 1 186 37 discriminator 2 view .LVU166
  590 001c DFF8A880 		ldr	r8, .L36+24
- 591              	.LBE59:
- 592              	.LBE58:
- 593              	.LBE57:
- 594              	.LBE56:
- 134:Galvo/galvo.c ****   uint16_t cy = galvo_axis_cmd(y, ax, ay, galvo_lut_beta,  GALVO_BETA0);
- 595              		.loc 1 134 17 view .LVU167
+ 591              	.LBE67:
+ 592              	.LBE66:
+ 593              	.LBE65:
+ 594              	.LBE64:
+ 155:Galvo/galvo.c ****   uint16_t cy = galvo_axis_cmd(y, ax, ay, galvo_lut_beta,  GALVO_BETA0);
+ 595              		.loc 1 155 17 view .LVU167
  596 0020 FFF7FEFF 		bl	galvo_axis_cmd.constprop.0
  597              	.LVL46:
- 135:Galvo/galvo.c **** 
- 598              		.loc 1 135 17 view .LVU168
+ 156:Galvo/galvo.c **** 
+ 598              		.loc 1 156 17 view .LVU168
  599 0024 234B     		ldr	r3, .L36+4
- 134:Galvo/galvo.c ****   uint16_t cy = galvo_axis_cmd(y, ax, ay, galvo_lut_beta,  GALVO_BETA0);
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 23
-
-
- 600              		.loc 1 134 17 view .LVU169
+ 155:Galvo/galvo.c ****   uint16_t cy = galvo_axis_cmd(y, ax, ay, galvo_lut_beta,  GALVO_BETA0);
+ 600              		.loc 1 155 17 view .LVU169
  601 0026 0646     		mov	r6, r0
- 135:Galvo/galvo.c **** 
- 602              		.loc 1 135 17 view .LVU170
+ 156:Galvo/galvo.c **** 
+ 602              		.loc 1 156 17 view .LVU170
  603 0028 3A46     		mov	r2, r7
  604 002a 2946     		mov	r1, r5
  605 002c 2046     		mov	r0, r4
  606              	.LVL47:
- 135:Galvo/galvo.c **** 
- 607              		.loc 1 135 3 is_stmt 1 view .LVU171
- 135:Galvo/galvo.c **** 
- 608              		.loc 1 135 17 is_stmt 0 view .LVU172
+ 156:Galvo/galvo.c **** 
+ 607              		.loc 1 156 3 is_stmt 1 view .LVU171
+ 156:Galvo/galvo.c **** 
+ 608              		.loc 1 156 17 is_stmt 0 view .LVU172
  609 002e FFF7FEFF 		bl	galvo_axis_cmd.constprop.0
  610              	.LVL48:
- 137:Galvo/galvo.c **** }
- 611              		.loc 1 137 3 is_stmt 1 view .LVU173
- 612              	.LBB65:
- 613              	.LBI56:
- 149:Galvo/galvo.c **** {
- 614              		.loc 1 149 13 view .LVU174
- 615              	.LBB64:
- 151:Galvo/galvo.c ****   uint32_t wx = ctrl | cx;
- 616              		.loc 1 151 3 view .LVU175
- 151:Galvo/galvo.c ****   uint32_t wx = ctrl | cx;
- 617              		.loc 1 151 49 is_stmt 0 view .LVU176
+ 158:Galvo/galvo.c **** }
+ 611              		.loc 1 158 3 is_stmt 1 view .LVU173
+ 612              	.LBB73:
+ 613              	.LBI64:
+ 170:Galvo/galvo.c **** {
+ 614              		.loc 1 170 13 view .LVU174
+ 615              	.LBB72:
+ 172:Galvo/galvo.c ****   uint32_t wx = ctrl | cx;
+ 616              		.loc 1 172 3 view .LVU175
+ 172:Galvo/galvo.c ****   uint32_t wx = ctrl | cx;
+ 617              		.loc 1 172 49 is_stmt 0 view .LVU176
  618 0032 214B     		ldr	r3, .L36+8
  619 0034 214C     		ldr	r4, .L36+12
  620              	.LVL49:
- 151:Galvo/galvo.c ****   uint32_t wx = ctrl | cx;
- 621              		.loc 1 151 49 view .LVU177
+ 172:Galvo/galvo.c ****   uint32_t wx = ctrl | cx;
+ 621              		.loc 1 172 49 view .LVU177
  622 0036 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
  623 0038 1B04     		lsls	r3, r3, #16
- 151:Galvo/galvo.c ****   uint32_t wx = ctrl | cx;
- 624              		.loc 1 151 12 view .LVU178
+ 172:Galvo/galvo.c ****   uint32_t wx = ctrl | cx;
+ 624              		.loc 1 172 12 view .LVU178
  625 003a 03F4E023 		and	r3, r3, #458752
  626              	.LVL50:
- 152:Galvo/galvo.c ****   uint32_t wy = ctrl | cy;
- 627              		.loc 1 152 3 is_stmt 1 view .LVU179
- 153:Galvo/galvo.c ****   uint32_t px = 0U, py = 0U;
- 628              		.loc 1 153 12 is_stmt 0 view .LVU180
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 24
+
+
+ 173:Galvo/galvo.c ****   uint32_t wy = ctrl | cy;
+ 627              		.loc 1 173 3 is_stmt 1 view .LVU179
+ 174:Galvo/galvo.c ****   uint32_t px = 0U, py = 0U;
+ 628              		.loc 1 174 12 is_stmt 0 view .LVU180
  629 003e 40EA0307 		orr	r7, r0, r3
  630              	.LVL51:
- 154:Galvo/galvo.c **** 
- 631              		.loc 1 154 21 view .LVU181
+ 175:Galvo/galvo.c **** 
+ 631              		.loc 1 175 21 view .LVU181
  632 0042 0020     		movs	r0, #0
  633              	.LVL52:
- 154:Galvo/galvo.c **** 
- 634              		.loc 1 154 21 view .LVU182
+ 175:Galvo/galvo.c **** 
+ 634              		.loc 1 175 21 view .LVU182
  635 0044 04F14C09 		add	r9, r4, #76
- 152:Galvo/galvo.c ****   uint32_t wy = ctrl | cy;
- 636              		.loc 1 152 12 view .LVU183
+ 173:Galvo/galvo.c ****   uint32_t wy = ctrl | cy;
+ 636              		.loc 1 173 12 view .LVU183
  637 0048 1E43     		orrs	r6, r6, r3
  638              	.LVL53:
- 153:Galvo/galvo.c ****   uint32_t px = 0U, py = 0U;
- 639              		.loc 1 153 3 is_stmt 1 view .LVU184
- 154:Galvo/galvo.c **** 
- 640              		.loc 1 154 3 view .LVU185
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 24
-
-
- 156:Galvo/galvo.c ****   {
- 641              		.loc 1 156 3 view .LVU186
- 642              	.LBB62:
- 156:Galvo/galvo.c ****   {
- 643              		.loc 1 156 8 view .LVU187
- 156:Galvo/galvo.c ****   {
- 644              		.loc 1 156 27 discriminator 1 view .LVU188
- 645              	.LBE62:
- 153:Galvo/galvo.c ****   uint32_t px = 0U, py = 0U;
- 646              		.loc 1 153 12 is_stmt 0 view .LVU189
+ 174:Galvo/galvo.c ****   uint32_t px = 0U, py = 0U;
+ 639              		.loc 1 174 3 is_stmt 1 view .LVU184
+ 175:Galvo/galvo.c **** 
+ 640              		.loc 1 175 3 view .LVU185
+ 177:Galvo/galvo.c ****   {
+ 641              		.loc 1 177 3 view .LVU186
+ 642              	.LBB70:
+ 177:Galvo/galvo.c ****   {
+ 643              		.loc 1 177 8 view .LVU187
+ 177:Galvo/galvo.c ****   {
+ 644              		.loc 1 177 27 discriminator 1 view .LVU188
+ 645              	.LBE70:
+ 174:Galvo/galvo.c ****   uint32_t px = 0U, py = 0U;
+ 646              		.loc 1 174 12 is_stmt 0 view .LVU189
  647 004a 4FF0120E 		mov	lr, #18
- 154:Galvo/galvo.c **** 
- 648              		.loc 1 154 12 view .LVU190
+ 175:Galvo/galvo.c **** 
+ 648              		.loc 1 175 12 view .LVU190
  649 004e 0546     		mov	r5, r0
  650              	.LVL54:
  651              	.L27:
- 652              	.LBB63:
- 653              	.LBB60:
- 158:Galvo/galvo.c ****     uint32_t by = (wy >> (18U - i)) & 1U;
- 654              		.loc 1 158 5 is_stmt 1 view .LVU191
- 158:Galvo/galvo.c ****     uint32_t by = (wy >> (18U - i)) & 1U;
- 655              		.loc 1 158 23 is_stmt 0 view .LVU192
+ 652              	.LBB71:
+ 653              	.LBB68:
+ 179:Galvo/galvo.c ****     uint32_t by = (wy >> (18U - i)) & 1U;
+ 654              		.loc 1 179 5 is_stmt 1 view .LVU191
+ 179:Galvo/galvo.c ****     uint32_t by = (wy >> (18U - i)) & 1U;
+ 655              		.loc 1 179 23 is_stmt 0 view .LVU192
  656 0050 26FA0EFC 		lsr	ip, r6, lr
- 158:Galvo/galvo.c ****     uint32_t by = (wy >> (18U - i)) & 1U;
- 657              		.loc 1 158 14 view .LVU193
+ 179:Galvo/galvo.c ****     uint32_t by = (wy >> (18U - i)) & 1U;
+ 657              		.loc 1 179 14 view .LVU193
  658 0054 0CF0010C 		and	ip, ip, #1
  659              	.LVL55:
- 159:Galvo/galvo.c **** 
- 660              		.loc 1 159 5 is_stmt 1 view .LVU194
- 159:Galvo/galvo.c **** 
- 661              		.loc 1 159 23 is_stmt 0 view .LVU195
+ 180:Galvo/galvo.c **** 
+ 660              		.loc 1 180 5 is_stmt 1 view .LVU194
+ 180:Galvo/galvo.c **** 
+ 661              		.loc 1 180 23 is_stmt 0 view .LVU195
  662 0058 27FA0EF3 		lsr	r3, r7, lr
- 165:Galvo/galvo.c ****   }
- 663              		.loc 1 165 37 discriminator 2 view .LVU196
+ 186:Galvo/galvo.c ****   }
+ 663              		.loc 1 186 37 discriminator 2 view .LVU196
  664 005c BCF1000F 		cmp	ip, #0
- 159:Galvo/galvo.c **** 
- 665              		.loc 1 159 14 view .LVU197
+ 180:Galvo/galvo.c **** 
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 25
+
+
+ 665              		.loc 1 180 14 view .LVU197
  666 0060 03F00103 		and	r3, r3, #1
  667              	.LVL56:
- 161:Galvo/galvo.c ****     py ^= by;
- 668              		.loc 1 161 5 is_stmt 1 view .LVU198
- 165:Galvo/galvo.c ****   }
- 669              		.loc 1 165 37 is_stmt 0 discriminator 2 view .LVU199
+ 182:Galvo/galvo.c ****     py ^= by;
+ 668              		.loc 1 182 5 is_stmt 1 view .LVU198
+ 186:Galvo/galvo.c ****   }
+ 669              		.loc 1 186 37 is_stmt 0 discriminator 2 view .LVU199
  670 0064 0CBF     		ite	eq
  671 0066 4246     		moveq	r2, r8
  672 0068 A022     		movne	r2, #160
- 165:Galvo/galvo.c ****   }
- 673              		.loc 1 165 61 discriminator 6 view .LVU200
+ 186:Galvo/galvo.c ****   }
+ 673              		.loc 1 186 61 discriminator 6 view .LVU200
  674 006a 002B     		cmp	r3, #0
  675 006c 14BF     		ite	ne
  676 006e 4021     		movne	r1, #64
  677 0070 4FF48001 		moveq	r1, #4194304
- 165:Galvo/galvo.c ****   }
- 678              		.loc 1 165 59 discriminator 8 view .LVU201
+ 186:Galvo/galvo.c ****   }
+ 678              		.loc 1 186 59 discriminator 8 view .LVU201
  679 0074 0A43     		orrs	r2, r2, r1
- 165:Galvo/galvo.c ****   }
- 680              		.loc 1 165 12 discriminator 8 view .LVU202
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 25
-
-
+ 186:Galvo/galvo.c ****   }
+ 680              		.loc 1 186 12 discriminator 8 view .LVU202
  681 0076 44F8042F 		str	r2, [r4, #4]!
- 682              	.LBE60:
- 156:Galvo/galvo.c ****   {
- 683              		.loc 1 156 27 discriminator 1 view .LVU203
+ 682              	.LBE68:
+ 177:Galvo/galvo.c ****   {
+ 683              		.loc 1 177 27 discriminator 1 view .LVU203
  684 007a A145     		cmp	r9, r4
  685 007c 2946     		mov	r1, r5
  686 007e 0246     		mov	r2, r0
- 687              	.LBB61:
- 161:Galvo/galvo.c ****     py ^= by;
- 688              		.loc 1 161 8 view .LVU204
+ 687              	.LBB69:
+ 182:Galvo/galvo.c ****     py ^= by;
+ 688              		.loc 1 182 8 view .LVU204
  689 0080 85EA0C05 		eor	r5, r5, ip
  690              	.LVL57:
- 162:Galvo/galvo.c **** 
- 691              		.loc 1 162 5 is_stmt 1 view .LVU205
- 162:Galvo/galvo.c **** 
- 692              		.loc 1 162 8 is_stmt 0 view .LVU206
+ 183:Galvo/galvo.c **** 
+ 691              		.loc 1 183 5 is_stmt 1 view .LVU205
+ 183:Galvo/galvo.c **** 
+ 692              		.loc 1 183 8 is_stmt 0 view .LVU206
  693 0084 80EA0300 		eor	r0, r0, r3
  694              	.LVL58:
- 165:Galvo/galvo.c ****   }
- 695              		.loc 1 165 5 is_stmt 1 view .LVU207
- 696              	.LBE61:
- 156:Galvo/galvo.c ****   {
- 697              		.loc 1 156 35 discriminator 2 view .LVU208
- 156:Galvo/galvo.c ****   {
- 698              		.loc 1 156 27 discriminator 1 view .LVU209
+ 186:Galvo/galvo.c ****   }
+ 695              		.loc 1 186 5 is_stmt 1 view .LVU207
+ 696              	.LBE69:
+ 177:Galvo/galvo.c ****   {
+ 697              		.loc 1 177 35 discriminator 2 view .LVU208
+ 177:Galvo/galvo.c ****   {
+ 698              		.loc 1 177 27 discriminator 1 view .LVU209
  699 0088 0EF1FF3E 		add	lr, lr, #-1
  700              	.LVL59:
- 156:Galvo/galvo.c ****   {
- 701              		.loc 1 156 27 is_stmt 0 discriminator 1 view .LVU210
+ 177:Galvo/galvo.c ****   {
+ 701              		.loc 1 177 27 is_stmt 0 discriminator 1 view .LVU210
  702 008c E0D1     		bne	.L27
- 703              	.LBE63:
- 168:Galvo/galvo.c **** }
- 704              		.loc 1 168 3 is_stmt 1 view .LVU211
- 168:Galvo/galvo.c **** }
- 705              		.loc 1 168 36 is_stmt 0 view .LVU212
+ 703              	.LBE71:
+ 189:Galvo/galvo.c **** }
+ 704              		.loc 1 189 3 is_stmt 1 view .LVU211
+ 189:Galvo/galvo.c **** }
+ 705              		.loc 1 189 36 is_stmt 0 view .LVU212
  706 008e 8C45     		cmp	ip, r1
- 168:Galvo/galvo.c **** }
- 707              		.loc 1 168 36 discriminator 1 view .LVU213
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 26
+
+
+ 189:Galvo/galvo.c **** }
+ 707              		.loc 1 189 36 discriminator 1 view .LVU213
  708 0090 18BF     		it	ne
  709 0092 0B49     		ldrne	r1, .L36+16
- 168:Galvo/galvo.c **** }
- 710              		.loc 1 168 11 discriminator 8 view .LVU214
+ 189:Galvo/galvo.c **** }
+ 710              		.loc 1 189 11 discriminator 8 view .LVU214
  711 0094 0B48     		ldr	r0, .L36+20
  712              	.LVL60:
- 168:Galvo/galvo.c **** }
- 713              		.loc 1 168 36 discriminator 2 view .LVU215
+ 189:Galvo/galvo.c **** }
+ 713              		.loc 1 189 36 discriminator 2 view .LVU215
  714 0096 08BF     		it	eq
  715 0098 4FF42001 		moveq	r1, #10485760
- 168:Galvo/galvo.c **** }
- 716              		.loc 1 168 60 discriminator 5 view .LVU216
+ 189:Galvo/galvo.c **** }
+ 716              		.loc 1 189 60 discriminator 5 view .LVU216
  717 009c 9A42     		cmp	r2, r3
  718 009e 0CBF     		ite	eq
  719 00a0 4FF48002 		moveq	r2, #4194304
  720 00a4 4022     		movne	r2, #64
  721              	.LVL61:
- 168:Galvo/galvo.c **** }
- 722              		.loc 1 168 58 discriminator 8 view .LVU217
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 26
-
-
+ 189:Galvo/galvo.c **** }
+ 722              		.loc 1 189 58 discriminator 8 view .LVU217
  723 00a6 0A43     		orrs	r2, r2, r1
- 168:Galvo/galvo.c **** }
- 724              		.loc 1 168 11 discriminator 8 view .LVU218
+ 189:Galvo/galvo.c **** }
+ 724              		.loc 1 189 11 discriminator 8 view .LVU218
  725 00a8 C264     		str	r2, [r0, #76]
  726              	.LVL62:
- 168:Galvo/galvo.c **** }
- 727              		.loc 1 168 11 discriminator 8 view .LVU219
- 728              	.LBE64:
- 729              	.LBE65:
- 138:Galvo/galvo.c **** 
- 730              		.loc 1 138 1 view .LVU220
+ 189:Galvo/galvo.c **** }
+ 727              		.loc 1 189 11 discriminator 8 view .LVU219
+ 728              	.LBE72:
+ 729              	.LBE73:
+ 159:Galvo/galvo.c **** 
+ 730              		.loc 1 159 1 view .LVU220
  731 00aa BDE8F883 		pop	{r3, r4, r5, r6, r7, r8, r9, pc}
  732              	.L37:
  733 00ae 00BF     		.align	2
@@ -1533,48 +1554,48 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  750              		.thumb
  751              		.thumb_func
  753              	Galvo_DwtInit:
- 754              	.LFB141:
- 221:Galvo/galvo.c **** 
- 222:Galvo/galvo.c **** /* ---- 对外 API ------------------------------------------------------------ */
- 223:Galvo/galvo.c **** 
- 224:Galvo/galvo.c **** void Galvo_DwtInit(void)
- 225:Galvo/galvo.c **** {
- 755              		.loc 1 225 1 is_stmt 1 view -0
+ 754              	.LFB142:
+ 242:Galvo/galvo.c **** 
+ 243:Galvo/galvo.c **** /* ---- 对外 API ------------------------------------------------------------ */
+ 244:Galvo/galvo.c **** 
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 27
+
+
+ 245:Galvo/galvo.c **** void Galvo_DwtInit(void)
+ 246:Galvo/galvo.c **** {
+ 755              		.loc 1 246 1 is_stmt 1 view -0
  756              		.cfi_startproc
  757              		@ args = 0, pretend = 0, frame = 0
  758              		@ frame_needed = 0, uses_anonymous_args = 0
  759              		@ link register save eliminated.
- 226:Galvo/galvo.c ****   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
- 760              		.loc 1 226 3 view .LVU222
- 761              		.loc 1 226 12 is_stmt 0 view .LVU223
+ 247:Galvo/galvo.c ****   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+ 760              		.loc 1 247 3 view .LVU222
+ 761              		.loc 1 247 12 is_stmt 0 view .LVU223
  762 0000 0749     		ldr	r1, .L39
- 227:Galvo/galvo.c ****   DWT->CYCCNT = 0U;
- 763              		.loc 1 227 15 view .LVU224
+ 248:Galvo/galvo.c ****   DWT->CYCCNT = 0U;
+ 763              		.loc 1 248 15 view .LVU224
  764 0002 084B     		ldr	r3, .L39+4
- 226:Galvo/galvo.c ****   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
- 765              		.loc 1 226 12 view .LVU225
+ 247:Galvo/galvo.c ****   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+ 765              		.loc 1 247 12 view .LVU225
  766 0004 D1F8FC20 		ldr	r2, [r1, #252]
- 767              		.loc 1 227 15 view .LVU226
+ 767              		.loc 1 248 15 view .LVU226
  768 0008 0020     		movs	r0, #0
- 226:Galvo/galvo.c ****   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
- 769              		.loc 1 226 20 view .LVU227
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 27
-
-
+ 247:Galvo/galvo.c ****   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+ 769              		.loc 1 247 20 view .LVU227
  770 000a 42F08072 		orr	r2, r2, #16777216
  771 000e C1F8FC20 		str	r2, [r1, #252]
- 772              		.loc 1 227 3 is_stmt 1 view .LVU228
- 773              		.loc 1 227 15 is_stmt 0 view .LVU229
+ 772              		.loc 1 248 3 is_stmt 1 view .LVU228
+ 773              		.loc 1 248 15 is_stmt 0 view .LVU229
  774 0012 5860     		str	r0, [r3, #4]
- 228:Galvo/galvo.c ****   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
- 775              		.loc 1 228 3 is_stmt 1 view .LVU230
- 776              		.loc 1 228 6 is_stmt 0 view .LVU231
+ 249:Galvo/galvo.c ****   DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+ 775              		.loc 1 249 3 is_stmt 1 view .LVU230
+ 776              		.loc 1 249 6 is_stmt 0 view .LVU231
  777 0014 1A68     		ldr	r2, [r3]
- 778              		.loc 1 228 13 view .LVU232
+ 778              		.loc 1 249 13 view .LVU232
  779 0016 42F00102 		orr	r2, r2, #1
  780 001a 1A60     		str	r2, [r3]
- 229:Galvo/galvo.c **** }
- 781              		.loc 1 229 1 view .LVU233
+ 250:Galvo/galvo.c **** }
+ 781              		.loc 1 250 1 view .LVU233
  782 001c 7047     		bx	lr
  783              	.L40:
  784 001e 00BF     		.align	2
@@ -1582,7 +1603,7 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  786 0020 00ED00E0 		.word	-536810240
  787 0024 001000E0 		.word	-536866816
  788              		.cfi_endproc
- 789              	.LFE141:
+ 789              	.LFE142:
  791              		.section	.text.Galvo_Init,"ax",%progbits
  792              		.align	1
  793              		.p2align 2,,3
@@ -1591,633 +1612,984 @@ ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 1
  796              		.thumb
  797              		.thumb_func
  799              	Galvo_Init:
- 800              	.LFB142:
- 230:Galvo/galvo.c **** 
- 231:Galvo/galvo.c **** void Galvo_Init(void)
- 232:Galvo/galvo.c **** {
- 801              		.loc 1 232 1 is_stmt 1 view -0
+ 800              	.LFB143:
+ 251:Galvo/galvo.c **** 
+ 252:Galvo/galvo.c **** void Galvo_Init(void)
+ 253:Galvo/galvo.c **** {
+ 801              		.loc 1 253 1 is_stmt 1 view -0
  802              		.cfi_startproc
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 28
+
+
  803              		@ args = 0, pretend = 0, frame = 0
  804              		@ frame_needed = 0, uses_anonymous_args = 0
- 233:Galvo/galvo.c ****   galvo_stage_gen = 0U;
- 805              		.loc 1 233 3 view .LVU235
- 806              		.loc 1 233 19 is_stmt 0 view .LVU236
- 807 0000 2548     		ldr	r0, .L55
- 234:Galvo/galvo.c ****   galvo_a_gen = 0U;
- 235:Galvo/galvo.c ****   galvo_b_gen = 0U;
- 808              		.loc 1 235 15 view .LVU237
- 809 0002 264B     		ldr	r3, .L55+4
- 234:Galvo/galvo.c ****   galvo_a_gen = 0U;
- 810              		.loc 1 234 15 view .LVU238
- 811 0004 264A     		ldr	r2, .L55+8
- 232:Galvo/galvo.c ****   galvo_stage_gen = 0U;
- 812              		.loc 1 232 1 view .LVU239
- 813 0006 10B5     		push	{r4, lr}
- 814              	.LCFI4:
- 815              		.cfi_def_cfa_offset 8
- 816              		.cfi_offset 4, -8
- 817              		.cfi_offset 14, -4
- 233:Galvo/galvo.c ****   galvo_stage_gen = 0U;
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 28
+ 254:Galvo/galvo.c ****   galvo_stage_gen = 0U;
+ 805              		.loc 1 254 3 view .LVU235
+ 253:Galvo/galvo.c ****   galvo_stage_gen = 0U;
+ 806              		.loc 1 253 1 is_stmt 0 view .LVU236
+ 807 0000 38B5     		push	{r3, r4, r5, lr}
+ 808              	.LCFI4:
+ 809              		.cfi_def_cfa_offset 16
+ 810              		.cfi_offset 3, -16
+ 811              		.cfi_offset 4, -12
+ 812              		.cfi_offset 5, -8
+ 813              		.cfi_offset 14, -4
+ 255:Galvo/galvo.c ****   galvo_a_gen = 0U;
+ 814              		.loc 1 255 15 view .LVU237
+ 815 0002 2B4A     		ldr	r2, .L55
+ 256:Galvo/galvo.c ****   galvo_b_gen = 0U;
+ 257:Galvo/galvo.c **** 
+ 258:Galvo/galvo.c ****   /* 规划器从原点、静止状态开始 */
+ 259:Galvo/galvo.c ****   galvo_plan_state = GALVO_IDLE;
+ 816              		.loc 1 259 20 view .LVU238
+ 817 0004 2B49     		ldr	r1, .L55+4
+ 260:Galvo/galvo.c ****   galvo_cur_x = 0;
+ 818              		.loc 1 260 15 view .LVU239
+ 819 0006 2C4B     		ldr	r3, .L55+8
+ 254:Galvo/galvo.c ****   galvo_a_gen = 0U;
+ 820              		.loc 1 254 19 view .LVU240
+ 821 0008 2C4D     		ldr	r5, .L55+12
+ 256:Galvo/galvo.c ****   galvo_b_gen = 0U;
+ 822              		.loc 1 256 15 view .LVU241
+ 823 000a 2D48     		ldr	r0, .L55+16
+ 254:Galvo/galvo.c ****   galvo_a_gen = 0U;
+ 824              		.loc 1 254 19 view .LVU242
+ 825 000c 0024     		movs	r4, #0
+ 826 000e 2C60     		str	r4, [r5]
+ 255:Galvo/galvo.c ****   galvo_b_gen = 0U;
+ 827              		.loc 1 255 3 is_stmt 1 view .LVU243
+ 259:Galvo/galvo.c ****   galvo_cur_x = 0;
+ 828              		.loc 1 259 20 is_stmt 0 view .LVU244
+ 829 0010 0C70     		strb	r4, [r1]
+ 255:Galvo/galvo.c ****   galvo_b_gen = 0U;
+ 830              		.loc 1 255 15 view .LVU245
+ 831 0012 1460     		str	r4, [r2]
+ 256:Galvo/galvo.c **** 
+ 832              		.loc 1 256 3 is_stmt 1 view .LVU246
+ 833              		.loc 1 260 15 is_stmt 0 view .LVU247
+ 834 0014 1C80     		strh	r4, [r3]	@ movhi
+ 261:Galvo/galvo.c ****   galvo_cur_y = 0;
+ 262:Galvo/galvo.c ****   galvo_last_point_cycle = 0U;
+ 835              		.loc 1 262 26 view .LVU248
+ 836 0016 2B4A     		ldr	r2, .L55+20
+ 263:Galvo/galvo.c ****   galvo_last_arrive_cycle = 0U;
+ 837              		.loc 1 263 27 view .LVU249
+ 838 0018 2B4B     		ldr	r3, .L55+24
+ 261:Galvo/galvo.c ****   galvo_cur_y = 0;
+ 839              		.loc 1 261 15 view .LVU250
+ 840 001a 2C49     		ldr	r1, .L55+28
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 29
 
 
- 818              		.loc 1 233 19 view .LVU240
- 819 0008 0024     		movs	r4, #0
- 820 000a 0460     		str	r4, [r0]
- 234:Galvo/galvo.c ****   galvo_a_gen = 0U;
- 821              		.loc 1 234 3 is_stmt 1 view .LVU241
- 236:Galvo/galvo.c **** 
- 237:Galvo/galvo.c ****   /* 先填中心帧，避免 DMA 启动后先发出未初始化数据 */
- 238:Galvo/galvo.c ****   galvo_build_stage(0, 0, galvo_stage);
- 822              		.loc 1 238 3 is_stmt 0 view .LVU242
- 823 000c 2146     		mov	r1, r4
- 824 000e 2046     		mov	r0, r4
- 234:Galvo/galvo.c ****   galvo_b_gen = 0U;
- 825              		.loc 1 234 15 view .LVU243
- 826 0010 1460     		str	r4, [r2]
- 235:Galvo/galvo.c **** 
- 827              		.loc 1 235 3 is_stmt 1 view .LVU244
- 235:Galvo/galvo.c **** 
- 828              		.loc 1 235 15 is_stmt 0 view .LVU245
- 829 0012 1C60     		str	r4, [r3]
- 830              		.loc 1 238 3 is_stmt 1 view .LVU246
- 831 0014 FFF7FEFF 		bl	galvo_build_stage.constprop.0
- 832              	.LVL63:
- 239:Galvo/galvo.c ****   memcpy(galvo_frame[0], galvo_stage, sizeof(galvo_stage));
- 833              		.loc 1 239 3 view .LVU247
- 834 0018 2249     		ldr	r1, .L55+12
- 835 001a 2348     		ldr	r0, .L55+16
- 836 001c 5022     		movs	r2, #80
- 837 001e FFF7FEFF 		bl	memcpy
- 838              	.LVL64:
- 240:Galvo/galvo.c ****   memcpy(galvo_frame[1], galvo_stage, sizeof(galvo_stage));
- 839              		.loc 1 240 3 view .LVU248
- 840 0022 2049     		ldr	r1, .L55+12
- 841 0024 2148     		ldr	r0, .L55+20
- 842 0026 5022     		movs	r2, #80
- 843 0028 FFF7FEFF 		bl	memcpy
- 844              	.LVL65:
- 241:Galvo/galvo.c **** 
- 242:Galvo/galvo.c ****   (void)HAL_DMA_RegisterCallback(&hdma_tim1_up, HAL_DMA_XFER_HALFCPLT_CB_ID,
- 845              		.loc 1 242 3 view .LVU249
- 846              		.loc 1 242 9 is_stmt 0 view .LVU250
- 847 002c 204A     		ldr	r2, .L55+24
- 848 002e 2148     		ldr	r0, .L55+28
- 849 0030 0121     		movs	r1, #1
- 850 0032 FFF7FEFF 		bl	HAL_DMA_RegisterCallback
- 851              	.LVL66:
- 243:Galvo/galvo.c ****                                  galvo_dma_half_cb);
- 244:Galvo/galvo.c ****   (void)HAL_DMA_RegisterCallback(&hdma_tim1_up, HAL_DMA_XFER_CPLT_CB_ID,
- 852              		.loc 1 244 3 is_stmt 1 view .LVU251
- 853              		.loc 1 244 9 is_stmt 0 view .LVU252
- 854 0036 2146     		mov	r1, r4
- 855 0038 1F4A     		ldr	r2, .L55+32
- 856 003a 1E48     		ldr	r0, .L55+28
- 245:Galvo/galvo.c ****                                  galvo_dma_cplt_cb);
- 246:Galvo/galvo.c ****   (void)HAL_DMA_RegisterCallback(&hdma_tim1_up, HAL_DMA_XFER_ERROR_CB_ID,
- 247:Galvo/galvo.c ****                                  galvo_dma_error_cb);
- 248:Galvo/galvo.c **** 
- 249:Galvo/galvo.c ****   /* 让 TIM1 更新事件产生 DMA 请求 (DIER.UDE) */
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 29
+ 841              		.loc 1 263 27 view .LVU251
+ 842 001c 1C60     		str	r4, [r3]
+ 262:Galvo/galvo.c ****   galvo_last_arrive_cycle = 0U;
+ 843              		.loc 1 262 26 view .LVU252
+ 844 001e 1460     		str	r4, [r2]
+ 256:Galvo/galvo.c **** 
+ 845              		.loc 1 256 15 view .LVU253
+ 846 0020 0460     		str	r4, [r0]
+ 259:Galvo/galvo.c ****   galvo_cur_x = 0;
+ 847              		.loc 1 259 3 is_stmt 1 view .LVU254
+ 260:Galvo/galvo.c ****   galvo_cur_y = 0;
+ 848              		.loc 1 260 3 view .LVU255
+ 261:Galvo/galvo.c ****   galvo_last_point_cycle = 0U;
+ 849              		.loc 1 261 3 view .LVU256
+ 261:Galvo/galvo.c ****   galvo_last_point_cycle = 0U;
+ 850              		.loc 1 261 15 is_stmt 0 view .LVU257
+ 851 0022 0C80     		strh	r4, [r1]	@ movhi
+ 262:Galvo/galvo.c ****   galvo_last_arrive_cycle = 0U;
+ 852              		.loc 1 262 3 is_stmt 1 view .LVU258
+ 853              		.loc 1 263 3 view .LVU259
+ 264:Galvo/galvo.c **** 
+ 265:Galvo/galvo.c ****   Laser_Off();                 /* 上电默认光闸关闭 */
+ 854              		.loc 1 265 3 view .LVU260
+ 855 0024 FFF7FEFF 		bl	Laser_Off
+ 856              	.LVL63:
+ 266:Galvo/galvo.c **** 
+ 267:Galvo/galvo.c ****   /* 先填中心帧，避免 DMA 启动后先发出未初始化数据 */
+ 268:Galvo/galvo.c ****   galvo_build_stage(0, 0, galvo_stage);
+ 857              		.loc 1 268 3 view .LVU261
+ 858 0028 2146     		mov	r1, r4
+ 859 002a 2046     		mov	r0, r4
+ 860 002c FFF7FEFF 		bl	galvo_build_stage.constprop.0
+ 861              	.LVL64:
+ 269:Galvo/galvo.c ****   memcpy(galvo_frame[0], galvo_stage, sizeof(galvo_stage));
+ 862              		.loc 1 269 3 view .LVU262
+ 863 0030 2749     		ldr	r1, .L55+32
+ 864 0032 2848     		ldr	r0, .L55+36
+ 865 0034 5022     		movs	r2, #80
+ 866 0036 FFF7FEFF 		bl	memcpy
+ 867              	.LVL65:
+ 270:Galvo/galvo.c ****   memcpy(galvo_frame[1], galvo_stage, sizeof(galvo_stage));
+ 868              		.loc 1 270 3 view .LVU263
+ 869 003a 2549     		ldr	r1, .L55+32
+ 870 003c 2648     		ldr	r0, .L55+40
+ 871 003e 5022     		movs	r2, #80
+ 872 0040 FFF7FEFF 		bl	memcpy
+ 873              	.LVL66:
+ 271:Galvo/galvo.c **** 
+ 272:Galvo/galvo.c ****   (void)HAL_DMA_RegisterCallback(&hdma_tim1_up, HAL_DMA_XFER_HALFCPLT_CB_ID,
+ 874              		.loc 1 272 3 view .LVU264
+ 875              		.loc 1 272 9 is_stmt 0 view .LVU265
+ 876 0044 254A     		ldr	r2, .L55+44
+ 877 0046 2648     		ldr	r0, .L55+48
+ 878 0048 0121     		movs	r1, #1
+ 879 004a FFF7FEFF 		bl	HAL_DMA_RegisterCallback
+ 880              	.LVL67:
+ 273:Galvo/galvo.c ****                                  galvo_dma_half_cb);
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 30
 
 
- 250:Galvo/galvo.c ****   __HAL_TIM_ENABLE_DMA(&htim1, TIM_DMA_UPDATE);
- 857              		.loc 1 250 3 view .LVU253
- 858 003c 1F4C     		ldr	r4, .L55+36
- 244:Galvo/galvo.c ****                                  galvo_dma_cplt_cb);
- 859              		.loc 1 244 9 view .LVU254
- 860 003e FFF7FEFF 		bl	HAL_DMA_RegisterCallback
- 861              	.LVL67:
- 246:Galvo/galvo.c ****                                  galvo_dma_error_cb);
- 862              		.loc 1 246 3 is_stmt 1 view .LVU255
- 246:Galvo/galvo.c ****                                  galvo_dma_error_cb);
- 863              		.loc 1 246 9 is_stmt 0 view .LVU256
- 864 0042 1F4A     		ldr	r2, .L55+40
- 865 0044 1B48     		ldr	r0, .L55+28
- 866 0046 0421     		movs	r1, #4
- 867 0048 FFF7FEFF 		bl	HAL_DMA_RegisterCallback
- 868              	.LVL68:
- 869              		.loc 1 250 3 is_stmt 1 view .LVU257
- 870 004c 2068     		ldr	r0, [r4]
- 251:Galvo/galvo.c **** 
- 252:Galvo/galvo.c ****   if (HAL_DMA_Start_IT(&hdma_tim1_up,
- 871              		.loc 1 252 7 is_stmt 0 view .LVU258
- 872 004e 1D4A     		ldr	r2, .L55+44
- 250:Galvo/galvo.c **** 
- 873              		.loc 1 250 3 view .LVU259
- 874 0050 C368     		ldr	r3, [r0, #12]
- 875              		.loc 1 252 7 view .LVU260
- 876 0052 1549     		ldr	r1, .L55+16
- 250:Galvo/galvo.c **** 
- 877              		.loc 1 250 3 view .LVU261
- 878 0054 43F48073 		orr	r3, r3, #256
- 879 0058 C360     		str	r3, [r0, #12]
- 880              		.loc 1 252 3 is_stmt 1 view .LVU262
- 881              		.loc 1 252 7 is_stmt 0 view .LVU263
- 882 005a 1648     		ldr	r0, .L55+28
- 883 005c 2823     		movs	r3, #40
- 884 005e FFF7FEFF 		bl	HAL_DMA_Start_IT
- 885              	.LVL69:
- 886              		.loc 1 252 6 discriminator 1 view .LVU264
- 887 0062 70B9     		cbnz	r0, .L52
- 888              	.L42:
- 253:Galvo/galvo.c ****                        (uint32_t)galvo_frame,
- 254:Galvo/galvo.c ****                        (uint32_t)&GPIOB->BSRR,
- 255:Galvo/galvo.c ****                        XY_BUF_WORDS) != HAL_OK)
- 256:Galvo/galvo.c ****   {
- 257:Galvo/galvo.c ****     Error_Handler();
- 258:Galvo/galvo.c ****   }
- 259:Galvo/galvo.c **** 
- 260:Galvo/galvo.c ****   /* 高级定时器必须开 MOE，否则 PE9 无输出 */
- 261:Galvo/galvo.c ****   __HAL_TIM_MOE_ENABLE(&htim1);
- 889              		.loc 1 261 3 is_stmt 1 view .LVU265
- 890 0064 2268     		ldr	r2, [r4]
- 262:Galvo/galvo.c **** 
- 263:Galvo/galvo.c ****   if (HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1) != HAL_OK)
- 891              		.loc 1 263 7 is_stmt 0 view .LVU266
- 892 0066 1548     		ldr	r0, .L55+36
- 261:Galvo/galvo.c **** 
- 893              		.loc 1 261 3 view .LVU267
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 30
-
-
- 894 0068 536C     		ldr	r3, [r2, #68]
- 895 006a 43F40043 		orr	r3, r3, #32768
- 896              		.loc 1 263 7 view .LVU268
- 897 006e 0021     		movs	r1, #0
- 261:Galvo/galvo.c **** 
- 898              		.loc 1 261 3 view .LVU269
- 899 0070 5364     		str	r3, [r2, #68]
- 900              		.loc 1 263 3 is_stmt 1 view .LVU270
- 901              		.loc 1 263 7 is_stmt 0 view .LVU271
- 902 0072 FFF7FEFF 		bl	HAL_TIM_PWM_Start
- 903              	.LVL70:
- 904              		.loc 1 263 6 discriminator 1 view .LVU272
- 905 0076 58B9     		cbnz	r0, .L53
- 906              	.L43:
- 264:Galvo/galvo.c ****   {
- 265:Galvo/galvo.c ****     Error_Handler();
- 266:Galvo/galvo.c ****   }
- 267:Galvo/galvo.c ****   if (HAL_TIM_Base_Start(&htim1) != HAL_OK)
- 907              		.loc 1 267 3 is_stmt 1 view .LVU273
- 908              		.loc 1 267 7 is_stmt 0 view .LVU274
- 909 0078 1048     		ldr	r0, .L55+36
- 910 007a FFF7FEFF 		bl	HAL_TIM_Base_Start
- 911              	.LVL71:
- 912              		.loc 1 267 6 discriminator 1 view .LVU275
- 913 007e 18B9     		cbnz	r0, .L54
- 268:Galvo/galvo.c ****   {
- 269:Galvo/galvo.c ****     Error_Handler();
- 270:Galvo/galvo.c ****   }
- 271:Galvo/galvo.c **** }
- 914              		.loc 1 271 1 view .LVU276
- 915 0080 10BD     		pop	{r4, pc}
- 916              	.L52:
- 257:Galvo/galvo.c ****   }
- 917              		.loc 1 257 5 is_stmt 1 view .LVU277
- 918 0082 FFF7FEFF 		bl	Error_Handler
- 919              	.LVL72:
- 920 0086 EDE7     		b	.L42
- 921              	.L54:
- 269:Galvo/galvo.c ****   }
- 922              		.loc 1 269 5 view .LVU278
- 923              		.loc 1 271 1 is_stmt 0 view .LVU279
- 924 0088 BDE81040 		pop	{r4, lr}
- 925              	.LCFI5:
- 926              		.cfi_remember_state
- 927              		.cfi_restore 14
- 928              		.cfi_restore 4
- 929              		.cfi_def_cfa_offset 0
- 269:Galvo/galvo.c ****   }
- 930              		.loc 1 269 5 view .LVU280
- 931 008c FFF7FEBF 		b	Error_Handler
- 932              	.LVL73:
- 933              	.L53:
- 934              	.LCFI6:
- 935              		.cfi_restore_state
- 265:Galvo/galvo.c ****   }
- 936              		.loc 1 265 5 is_stmt 1 view .LVU281
- 937 0090 FFF7FEFF 		bl	Error_Handler
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 31
-
-
- 938              	.LVL74:
- 939 0094 F0E7     		b	.L43
- 940              	.L56:
- 941 0096 00BF     		.align	2
- 942              	.L55:
- 943 0098 00000000 		.word	galvo_stage_gen
- 944 009c 00000000 		.word	galvo_b_gen
- 945 00a0 00000000 		.word	galvo_a_gen
- 946 00a4 00000000 		.word	galvo_stage
- 947 00a8 00000000 		.word	galvo_frame
- 948 00ac 50000000 		.word	galvo_frame+80
- 949 00b0 00000000 		.word	galvo_dma_half_cb
- 950 00b4 00000000 		.word	hdma_tim1_up
- 951 00b8 00000000 		.word	galvo_dma_cplt_cb
- 952 00bc 00000000 		.word	htim1
- 953 00c0 00000000 		.word	galvo_dma_error_cb
- 954 00c4 18040240 		.word	1073873944
- 955              		.cfi_endproc
- 956              	.LFE142:
- 958              		.section	.text.Galvo_Task,"ax",%progbits
- 959              		.align	1
- 960              		.p2align 2,,3
- 961              		.global	Galvo_Task
- 962              		.syntax unified
- 963              		.thumb
- 964              		.thumb_func
- 966              	Galvo_Task:
- 967              	.LFB143:
- 272:Galvo/galvo.c **** 
- 273:Galvo/galvo.c **** void Galvo_Task(void)
- 274:Galvo/galvo.c **** {
- 968              		.loc 1 274 1 view -0
- 969              		.cfi_startproc
- 970              		@ args = 0, pretend = 0, frame = 8
- 971              		@ frame_needed = 0, uses_anonymous_args = 0
- 275:Galvo/galvo.c ****   int16_t x, y;
- 972              		.loc 1 275 3 view .LVU283
- 276:Galvo/galvo.c **** 
- 277:Galvo/galvo.c ****   if (!Comm_PopPoint(&x, &y))
- 973              		.loc 1 277 3 view .LVU284
- 274:Galvo/galvo.c ****   int16_t x, y;
- 974              		.loc 1 274 1 is_stmt 0 view .LVU285
- 975 0000 10B5     		push	{r4, lr}
- 976              	.LCFI7:
- 977              		.cfi_def_cfa_offset 8
- 978              		.cfi_offset 4, -8
- 979              		.cfi_offset 14, -4
- 980 0002 82B0     		sub	sp, sp, #8
- 981              	.LCFI8:
- 982              		.cfi_def_cfa_offset 16
- 983              		.loc 1 277 8 view .LVU286
- 984 0004 0DF10601 		add	r1, sp, #6
- 985 0008 01A8     		add	r0, sp, #4
- 986 000a FFF7FEFF 		bl	Comm_PopPoint
- 987              	.LVL75:
- 988              		.loc 1 277 6 discriminator 1 view .LVU287
- 989 000e 48B1     		cbz	r0, .L57
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 32
-
-
- 278:Galvo/galvo.c ****   {
- 279:Galvo/galvo.c ****     return;
- 280:Galvo/galvo.c ****   }
+ 274:Galvo/galvo.c ****   (void)HAL_DMA_RegisterCallback(&hdma_tim1_up, HAL_DMA_XFER_CPLT_CB_ID,
+ 881              		.loc 1 274 3 is_stmt 1 view .LVU266
+ 882              		.loc 1 274 9 is_stmt 0 view .LVU267
+ 883 004e 2146     		mov	r1, r4
+ 884 0050 244A     		ldr	r2, .L55+52
+ 885 0052 2348     		ldr	r0, .L55+48
+ 275:Galvo/galvo.c ****                                  galvo_dma_cplt_cb);
+ 276:Galvo/galvo.c ****   (void)HAL_DMA_RegisterCallback(&hdma_tim1_up, HAL_DMA_XFER_ERROR_CB_ID,
+ 277:Galvo/galvo.c ****                                  galvo_dma_error_cb);
+ 278:Galvo/galvo.c **** 
+ 279:Galvo/galvo.c ****   /* 让 TIM1 更新事件产生 DMA 请求 (DIER.UDE) */
+ 280:Galvo/galvo.c ****   __HAL_TIM_ENABLE_DMA(&htim1, TIM_DMA_UPDATE);
+ 886              		.loc 1 280 3 view .LVU268
+ 887 0054 244C     		ldr	r4, .L55+56
+ 274:Galvo/galvo.c ****                                  galvo_dma_cplt_cb);
+ 888              		.loc 1 274 9 view .LVU269
+ 889 0056 FFF7FEFF 		bl	HAL_DMA_RegisterCallback
+ 890              	.LVL68:
+ 276:Galvo/galvo.c ****                                  galvo_dma_error_cb);
+ 891              		.loc 1 276 3 is_stmt 1 view .LVU270
+ 276:Galvo/galvo.c ****                                  galvo_dma_error_cb);
+ 892              		.loc 1 276 9 is_stmt 0 view .LVU271
+ 893 005a 244A     		ldr	r2, .L55+60
+ 894 005c 2048     		ldr	r0, .L55+48
+ 895 005e 0421     		movs	r1, #4
+ 896 0060 FFF7FEFF 		bl	HAL_DMA_RegisterCallback
+ 897              	.LVL69:
+ 898              		.loc 1 280 3 is_stmt 1 view .LVU272
+ 899 0064 2068     		ldr	r0, [r4]
  281:Galvo/galvo.c **** 
- 282:Galvo/galvo.c ****   /* 上一代还没铺满两个半区时不动 stage（正常速率下永远不会命中） */
- 283:Galvo/galvo.c ****   if ((galvo_a_gen != galvo_stage_gen) || (galvo_b_gen != galvo_stage_gen))
- 990              		.loc 1 283 3 is_stmt 1 view .LVU288
- 991              		.loc 1 283 20 is_stmt 0 view .LVU289
- 992 0010 0E4B     		ldr	r3, .L67
- 993 0012 0F4C     		ldr	r4, .L67+4
- 994 0014 1A68     		ldr	r2, [r3]
- 995 0016 2368     		ldr	r3, [r4]
- 996              		.loc 1 283 6 view .LVU290
- 997 0018 9A42     		cmp	r2, r3
- 998 001a 05D0     		beq	.L66
- 999              	.L59:
- 284:Galvo/galvo.c ****   {
- 285:Galvo/galvo.c ****     galvo_drop++;               /* 该点丢弃，下次发新点会覆盖 */
- 1000              		.loc 1 285 5 is_stmt 1 view .LVU291
- 1001              		.loc 1 285 15 is_stmt 0 view .LVU292
- 1002 001c 0D4A     		ldr	r2, .L67+8
- 1003 001e 1368     		ldr	r3, [r2]
- 1004 0020 0133     		adds	r3, r3, #1
- 1005 0022 1360     		str	r3, [r2]
- 286:Galvo/galvo.c ****     return;
- 1006              		.loc 1 286 5 is_stmt 1 view .LVU293
- 1007              	.L57:
- 287:Galvo/galvo.c ****   }
- 288:Galvo/galvo.c **** 
- 289:Galvo/galvo.c ****   galvo_build_stage(x, y, galvo_stage);
- 290:Galvo/galvo.c **** 
- 291:Galvo/galvo.c ****   __DMB();                     /* stage 写完，再发布代号 */
- 292:Galvo/galvo.c ****   galvo_stage_gen++;
- 293:Galvo/galvo.c **** }
- 1008              		.loc 1 293 1 is_stmt 0 view .LVU294
- 1009 0024 02B0     		add	sp, sp, #8
- 1010              	.LCFI9:
- 1011              		.cfi_remember_state
- 1012              		.cfi_def_cfa_offset 8
- 1013              		@ sp needed
- 1014 0026 10BD     		pop	{r4, pc}
- 1015              	.L66:
- 1016              	.LCFI10:
- 1017              		.cfi_restore_state
- 283:Galvo/galvo.c ****   {
- 1018              		.loc 1 283 56 discriminator 1 view .LVU295
- 1019 0028 0B4B     		ldr	r3, .L67+12
- 1020 002a 1A68     		ldr	r2, [r3]
- 1021 002c 2368     		ldr	r3, [r4]
- 283:Galvo/galvo.c ****   {
- 1022              		.loc 1 283 40 discriminator 1 view .LVU296
- 1023 002e 9A42     		cmp	r2, r3
- 1024 0030 F4D1     		bne	.L59
+ 282:Galvo/galvo.c ****   if (HAL_DMA_Start_IT(&hdma_tim1_up,
+ 900              		.loc 1 282 7 is_stmt 0 view .LVU273
+ 901 0066 224A     		ldr	r2, .L55+64
+ 280:Galvo/galvo.c **** 
+ 902              		.loc 1 280 3 view .LVU274
+ 903 0068 C368     		ldr	r3, [r0, #12]
+ 904              		.loc 1 282 7 view .LVU275
+ 905 006a 1A49     		ldr	r1, .L55+36
+ 280:Galvo/galvo.c **** 
+ 906              		.loc 1 280 3 view .LVU276
+ 907 006c 43F48073 		orr	r3, r3, #256
+ 908 0070 C360     		str	r3, [r0, #12]
+ 909              		.loc 1 282 3 is_stmt 1 view .LVU277
+ 910              		.loc 1 282 7 is_stmt 0 view .LVU278
+ 911 0072 1B48     		ldr	r0, .L55+48
+ 912 0074 2823     		movs	r3, #40
+ 913 0076 FFF7FEFF 		bl	HAL_DMA_Start_IT
+ 914              	.LVL70:
+ 915              		.loc 1 282 6 discriminator 1 view .LVU279
+ 916 007a 70B9     		cbnz	r0, .L52
+ 917              	.L42:
+ 283:Galvo/galvo.c ****                        (uint32_t)galvo_frame,
+ 284:Galvo/galvo.c ****                        (uint32_t)&GPIOB->BSRR,
+ 285:Galvo/galvo.c ****                        XY_BUF_WORDS) != HAL_OK)
+ 286:Galvo/galvo.c ****   {
+ 287:Galvo/galvo.c ****     Error_Handler();
+ 288:Galvo/galvo.c ****   }
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 31
+
+
  289:Galvo/galvo.c **** 
- 1025              		.loc 1 289 3 is_stmt 1 view .LVU297
- 1026 0032 BDF90610 		ldrsh	r1, [sp, #6]
- 1027 0036 BDF90400 		ldrsh	r0, [sp, #4]
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 33
+ 290:Galvo/galvo.c ****   /* 高级定时器必须开 MOE，否则 PE9 无输出 */
+ 291:Galvo/galvo.c ****   __HAL_TIM_MOE_ENABLE(&htim1);
+ 918              		.loc 1 291 3 is_stmt 1 view .LVU280
+ 919 007c 2268     		ldr	r2, [r4]
+ 292:Galvo/galvo.c **** 
+ 293:Galvo/galvo.c ****   if (HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1) != HAL_OK)
+ 920              		.loc 1 293 7 is_stmt 0 view .LVU281
+ 921 007e 1A48     		ldr	r0, .L55+56
+ 291:Galvo/galvo.c **** 
+ 922              		.loc 1 291 3 view .LVU282
+ 923 0080 536C     		ldr	r3, [r2, #68]
+ 924 0082 43F40043 		orr	r3, r3, #32768
+ 925              		.loc 1 293 7 view .LVU283
+ 926 0086 0021     		movs	r1, #0
+ 291:Galvo/galvo.c **** 
+ 927              		.loc 1 291 3 view .LVU284
+ 928 0088 5364     		str	r3, [r2, #68]
+ 929              		.loc 1 293 3 is_stmt 1 view .LVU285
+ 930              		.loc 1 293 7 is_stmt 0 view .LVU286
+ 931 008a FFF7FEFF 		bl	HAL_TIM_PWM_Start
+ 932              	.LVL71:
+ 933              		.loc 1 293 6 discriminator 1 view .LVU287
+ 934 008e 58B9     		cbnz	r0, .L53
+ 935              	.L43:
+ 294:Galvo/galvo.c ****   {
+ 295:Galvo/galvo.c ****     Error_Handler();
+ 296:Galvo/galvo.c ****   }
+ 297:Galvo/galvo.c ****   if (HAL_TIM_Base_Start(&htim1) != HAL_OK)
+ 936              		.loc 1 297 3 is_stmt 1 view .LVU288
+ 937              		.loc 1 297 7 is_stmt 0 view .LVU289
+ 938 0090 1548     		ldr	r0, .L55+56
+ 939 0092 FFF7FEFF 		bl	HAL_TIM_Base_Start
+ 940              	.LVL72:
+ 941              		.loc 1 297 6 discriminator 1 view .LVU290
+ 942 0096 18B9     		cbnz	r0, .L54
+ 298:Galvo/galvo.c ****   {
+ 299:Galvo/galvo.c ****     Error_Handler();
+ 300:Galvo/galvo.c ****   }
+ 301:Galvo/galvo.c **** }
+ 943              		.loc 1 301 1 view .LVU291
+ 944 0098 38BD     		pop	{r3, r4, r5, pc}
+ 945              	.L52:
+ 287:Galvo/galvo.c ****   }
+ 946              		.loc 1 287 5 is_stmt 1 view .LVU292
+ 947 009a FFF7FEFF 		bl	Error_Handler
+ 948              	.LVL73:
+ 949 009e EDE7     		b	.L42
+ 950              	.L54:
+ 299:Galvo/galvo.c ****   }
+ 951              		.loc 1 299 5 view .LVU293
+ 952              		.loc 1 301 1 is_stmt 0 view .LVU294
+ 953 00a0 BDE83840 		pop	{r3, r4, r5, lr}
+ 954              	.LCFI5:
+ 955              		.cfi_remember_state
+ 956              		.cfi_restore 14
+ 957              		.cfi_restore 5
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 32
 
 
- 1028 003a FFF7FEFF 		bl	galvo_build_stage.constprop.0
- 1029              	.LVL76:
- 291:Galvo/galvo.c ****   galvo_stage_gen++;
- 1030              		.loc 1 291 3 view .LVU298
- 1031              	.LBB66:
- 1032              	.LBI66:
+ 958              		.cfi_restore 4
+ 959              		.cfi_restore 3
+ 960              		.cfi_def_cfa_offset 0
+ 299:Galvo/galvo.c ****   }
+ 961              		.loc 1 299 5 view .LVU295
+ 962 00a4 FFF7FEBF 		b	Error_Handler
+ 963              	.LVL74:
+ 964              	.L53:
+ 965              	.LCFI6:
+ 966              		.cfi_restore_state
+ 295:Galvo/galvo.c ****   }
+ 967              		.loc 1 295 5 is_stmt 1 view .LVU296
+ 968 00a8 FFF7FEFF 		bl	Error_Handler
+ 969              	.LVL75:
+ 970 00ac F0E7     		b	.L43
+ 971              	.L56:
+ 972 00ae 00BF     		.align	2
+ 973              	.L55:
+ 974 00b0 00000000 		.word	galvo_a_gen
+ 975 00b4 00000000 		.word	galvo_plan_state
+ 976 00b8 00000000 		.word	galvo_cur_x
+ 977 00bc 00000000 		.word	galvo_stage_gen
+ 978 00c0 00000000 		.word	galvo_b_gen
+ 979 00c4 00000000 		.word	galvo_last_point_cycle
+ 980 00c8 00000000 		.word	galvo_last_arrive_cycle
+ 981 00cc 00000000 		.word	galvo_cur_y
+ 982 00d0 00000000 		.word	galvo_stage
+ 983 00d4 00000000 		.word	galvo_frame
+ 984 00d8 50000000 		.word	galvo_frame+80
+ 985 00dc 00000000 		.word	galvo_dma_half_cb
+ 986 00e0 00000000 		.word	hdma_tim1_up
+ 987 00e4 00000000 		.word	galvo_dma_cplt_cb
+ 988 00e8 00000000 		.word	htim1
+ 989 00ec 00000000 		.word	galvo_dma_error_cb
+ 990 00f0 18040240 		.word	1073873944
+ 991              		.cfi_endproc
+ 992              	.LFE143:
+ 994              		.section	.text.Galvo_Task,"ax",%progbits
+ 995              		.align	1
+ 996              		.p2align 2,,3
+ 997              		.global	Galvo_Task
+ 998              		.syntax unified
+ 999              		.thumb
+ 1000              		.thumb_func
+ 1002              	Galvo_Task:
+ 1003              	.LFB144:
+ 302:Galvo/galvo.c **** 
+ 303:Galvo/galvo.c **** void Galvo_Task(void)
+ 304:Galvo/galvo.c **** {
+ 1004              		.loc 1 304 1 view -0
+ 1005              		.cfi_startproc
+ 1006              		@ args = 0, pretend = 0, frame = 16
+ 1007              		@ frame_needed = 0, uses_anonymous_args = 0
+ 305:Galvo/galvo.c ****   uint32_t now;
+ 1008              		.loc 1 305 3 view .LVU298
+ 306:Galvo/galvo.c ****   int16_t x, y;
+ 1009              		.loc 1 306 3 view .LVU299
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 33
+
+
+ 307:Galvo/galvo.c **** 
+ 308:Galvo/galvo.c ****   now = DWT->CYCCNT;
+ 1010              		.loc 1 308 3 view .LVU300
+ 1011              	.LBB74:
+ 1012              	.LBB75:
+  67:Galvo/galvo.c **** }
+ 1013              		.loc 1 67 32 is_stmt 0 view .LVU301
+ 1014 0000 374B     		ldr	r3, .L76
+ 1015              	.LBE75:
+ 1016              	.LBE74:
+ 1017              		.loc 1 308 7 view .LVU302
+ 1018 0002 384A     		ldr	r2, .L76+4
+ 1019              	.LBB80:
+ 1020              	.LBB76:
+  67:Galvo/galvo.c **** }
+ 1021              		.loc 1 67 32 view .LVU303
+ 1022 0004 3849     		ldr	r1, .L76+8
+ 1023 0006 1B68     		ldr	r3, [r3]
+ 1024              	.LBE76:
+ 1025              	.LBE80:
+ 304:Galvo/galvo.c ****   uint32_t now;
+ 1026              		.loc 1 304 1 view .LVU304
+ 1027 0008 2DE9F043 		push	{r4, r5, r6, r7, r8, r9, lr}
+ 1028              	.LCFI7:
+ 1029              		.cfi_def_cfa_offset 28
+ 1030              		.cfi_offset 4, -28
+ 1031              		.cfi_offset 5, -24
+ 1032              		.cfi_offset 6, -20
+ 1033              		.cfi_offset 7, -16
+ 1034              		.cfi_offset 8, -12
+ 1035              		.cfi_offset 9, -8
+ 1036              		.cfi_offset 14, -4
+ 309:Galvo/galvo.c **** 
+ 310:Galvo/galvo.c ****   /* 相邻规划点的最小间隔 */
+ 311:Galvo/galvo.c ****   if ((now - galvo_last_point_cycle) < galvo_us_to_cycles(SCURVE_INTERVAL_US))
+ 1037              		.loc 1 311 12 view .LVU305
+ 1038 000c 374D     		ldr	r5, .L76+12
+ 308:Galvo/galvo.c **** 
+ 1039              		.loc 1 308 7 view .LVU306
+ 1040 000e 5468     		ldr	r4, [r2, #4]
+ 1041              	.LVL76:
+ 1042              		.loc 1 311 3 is_stmt 1 view .LVU307
+ 1043              	.LBB81:
+ 1044              	.LBI74:
+  65:Galvo/galvo.c **** {
+ 1045              		.loc 1 65 17 view .LVU308
+ 1046              	.LBB77:
+  67:Galvo/galvo.c **** }
+ 1047              		.loc 1 67 3 view .LVU309
+ 1048              	.LBE77:
+ 1049              	.LBE81:
+ 1050              		.loc 1 311 12 is_stmt 0 view .LVU310
+ 1051 0010 2A68     		ldr	r2, [r5]
+ 1052              	.LBB82:
+ 1053              	.LBB78:
+  67:Galvo/galvo.c **** }
+ 1054              		.loc 1 67 32 view .LVU311
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 34
+
+
+ 1055 0012 A1FB0313 		umull	r1, r3, r1, r3
+ 1056 0016 9B0C     		lsrs	r3, r3, #18
+ 1057              	.LVL77:
+  67:Galvo/galvo.c **** }
+ 1058              		.loc 1 67 32 view .LVU312
+ 1059              	.LBE78:
+ 1060              	.LBE82:
+ 1061              		.loc 1 311 12 view .LVU313
+ 1062 0018 A11A     		subs	r1, r4, r2
+ 1063              	.LBB83:
+ 1064              	.LBB79:
+  67:Galvo/galvo.c **** }
+ 1065              		.loc 1 67 13 view .LVU314
+ 1066 001a 6422     		movs	r2, #100
+ 1067 001c 03FB02F2 		mul	r2, r3, r2
+ 1068              	.LBE79:
+ 1069              	.LBE83:
+ 1070              		.loc 1 311 6 discriminator 1 view .LVU315
+ 1071 0020 9142     		cmp	r1, r2
+ 304:Galvo/galvo.c ****   uint32_t now;
+ 1072              		.loc 1 304 1 view .LVU316
+ 1073 0022 87B0     		sub	sp, sp, #28
+ 1074              	.LCFI8:
+ 1075              		.cfi_def_cfa_offset 56
+ 1076              		.loc 1 311 6 discriminator 1 view .LVU317
+ 1077 0024 0DD3     		bcc	.L57
+ 312:Galvo/galvo.c ****   {
+ 313:Galvo/galvo.c ****     return;
+ 314:Galvo/galvo.c ****   }
+ 315:Galvo/galvo.c **** 
+ 316:Galvo/galvo.c ****   if (galvo_plan_state == GALVO_IDLE)
+ 1078              		.loc 1 316 3 is_stmt 1 view .LVU318
+ 1079              		.loc 1 316 24 is_stmt 0 view .LVU319
+ 1080 0026 324E     		ldr	r6, .L76+16
+ 1081              		.loc 1 316 6 view .LVU320
+ 1082 0028 3278     		ldrb	r2, [r6]	@ zero_extendqisi2
+ 1083 002a 6AB1     		cbz	r2, .L74
+ 1084              	.L59:
+ 317:Galvo/galvo.c ****   {
+ 318:Galvo/galvo.c ****     CommPoint pt;
+ 319:Galvo/galvo.c **** 
+ 320:Galvo/galvo.c ****     /* 到达目标点后的稳定时间，过了才允许写入下一段并切换激光 */
+ 321:Galvo/galvo.c ****     if ((now - galvo_last_arrive_cycle) < galvo_us_to_cycles(SCURVE_SETTLE_US))
+ 322:Galvo/galvo.c ****     {
+ 323:Galvo/galvo.c ****       return;
+ 324:Galvo/galvo.c ****     }
+ 325:Galvo/galvo.c **** 
+ 326:Galvo/galvo.c ****     if (!Comm_PopPoint(&pt))
+ 327:Galvo/galvo.c ****     {
+ 328:Galvo/galvo.c ****       return;                  /* 队列为空，保持当前位置 */
+ 329:Galvo/galvo.c ****     }
+ 330:Galvo/galvo.c **** 
+ 331:Galvo/galvo.c ****     /* 激光状态属于"移动到该目标点"这一段，在段起点切换 */
+ 332:Galvo/galvo.c ****     if (pt.laser != 0U)
+ 333:Galvo/galvo.c ****     {
+ 334:Galvo/galvo.c ****       Laser_On();
+ 335:Galvo/galvo.c ****     }
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 35
+
+
+ 336:Galvo/galvo.c ****     else
+ 337:Galvo/galvo.c ****     {
+ 338:Galvo/galvo.c ****       Laser_Off();
+ 339:Galvo/galvo.c ****     }
+ 340:Galvo/galvo.c **** 
+ 341:Galvo/galvo.c ****     SCurve_Start(&galvo_scurve, galvo_cur_x, galvo_cur_y, pt.x, pt.y);
+ 342:Galvo/galvo.c ****     galvo_plan_state = GALVO_MOVING;
+ 343:Galvo/galvo.c ****   }
+ 344:Galvo/galvo.c **** 
+ 345:Galvo/galvo.c ****   /* 上一代还没铺满两个半区时先不动 stage（等 DMA 中断追上） */
+ 346:Galvo/galvo.c ****   if ((galvo_a_gen != galvo_stage_gen) || (galvo_b_gen != galvo_stage_gen))
+ 1085              		.loc 1 346 3 is_stmt 1 view .LVU321
+ 1086              		.loc 1 346 20 is_stmt 0 view .LVU322
+ 1087 002c 314B     		ldr	r3, .L76+20
+ 1088 002e 324F     		ldr	r7, .L76+24
+ 1089 0030 1A68     		ldr	r2, [r3]
+ 1090 0032 3B68     		ldr	r3, [r7]
+ 1091              		.loc 1 346 6 view .LVU323
+ 1092 0034 9A42     		cmp	r2, r3
+ 1093 0036 04D1     		bne	.L57
+ 1094              		.loc 1 346 56 discriminator 1 view .LVU324
+ 1095 0038 304B     		ldr	r3, .L76+28
+ 1096 003a 1A68     		ldr	r2, [r3]
+ 1097 003c 3B68     		ldr	r3, [r7]
+ 1098              		.loc 1 346 40 discriminator 1 view .LVU325
+ 1099 003e 9A42     		cmp	r2, r3
+ 1100 0040 25D0     		beq	.L75
+ 1101              	.L57:
+ 347:Galvo/galvo.c ****   {
+ 348:Galvo/galvo.c ****     return;
+ 349:Galvo/galvo.c ****   }
+ 350:Galvo/galvo.c **** 
+ 351:Galvo/galvo.c ****   if (!SCurve_Next(&galvo_scurve, &x, &y))
+ 352:Galvo/galvo.c ****   {
+ 353:Galvo/galvo.c ****     galvo_plan_state = GALVO_IDLE;
+ 354:Galvo/galvo.c ****     return;
+ 355:Galvo/galvo.c ****   }
+ 356:Galvo/galvo.c **** 
+ 357:Galvo/galvo.c ****   galvo_build_stage(x, y, galvo_stage);
+ 358:Galvo/galvo.c ****   galvo_cur_x = x;
+ 359:Galvo/galvo.c ****   galvo_cur_y = y;
+ 360:Galvo/galvo.c ****   galvo_last_point_cycle = now;
+ 361:Galvo/galvo.c **** 
+ 362:Galvo/galvo.c ****   if (SCurve_Done(&galvo_scurve))
+ 363:Galvo/galvo.c ****   {
+ 364:Galvo/galvo.c ****     galvo_plan_state = GALVO_IDLE;          /* 已到达目标点 */
+ 365:Galvo/galvo.c ****     galvo_last_arrive_cycle = now;
+ 366:Galvo/galvo.c ****   }
+ 367:Galvo/galvo.c **** 
+ 368:Galvo/galvo.c ****   __DMB();                     /* stage 写完，再发布代号 */
+ 369:Galvo/galvo.c ****   galvo_stage_gen++;
+ 370:Galvo/galvo.c **** }
+ 1102              		.loc 1 370 1 view .LVU326
+ 1103 0042 07B0     		add	sp, sp, #28
+ 1104              	.LCFI9:
+ 1105              		.cfi_remember_state
+ 1106              		.cfi_def_cfa_offset 28
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 36
+
+
+ 1107              		@ sp needed
+ 1108 0044 BDE8F083 		pop	{r4, r5, r6, r7, r8, r9, pc}
+ 1109              	.LVL78:
+ 1110              	.L74:
+ 1111              	.LCFI10:
+ 1112              		.cfi_restore_state
+ 1113              	.LBB84:
+ 318:Galvo/galvo.c **** 
+ 1114              		.loc 1 318 5 is_stmt 1 view .LVU327
+ 321:Galvo/galvo.c ****     {
+ 1115              		.loc 1 321 5 view .LVU328
+ 1116              	.LBB85:
+ 1117              	.LBI85:
+  65:Galvo/galvo.c **** {
+ 1118              		.loc 1 65 17 view .LVU329
+ 1119              	.LBB86:
+  67:Galvo/galvo.c **** }
+ 1120              		.loc 1 67 3 view .LVU330
+  67:Galvo/galvo.c **** }
+ 1121              		.loc 1 67 3 is_stmt 0 view .LVU331
+ 1122              	.LBE86:
+ 1123              	.LBE85:
+ 321:Galvo/galvo.c ****     {
+ 1124              		.loc 1 321 14 view .LVU332
+ 1125 0048 2D4A     		ldr	r2, .L76+32
+ 1126 004a 1268     		ldr	r2, [r2]
+ 1127              	.LBB89:
+ 1128              	.LBB87:
+  67:Galvo/galvo.c **** }
+ 1129              		.loc 1 67 13 view .LVU333
+ 1130 004c C821     		movs	r1, #200
+ 1131              	.LBE87:
+ 1132              	.LBE89:
+ 321:Galvo/galvo.c ****     {
+ 1133              		.loc 1 321 14 view .LVU334
+ 1134 004e A21A     		subs	r2, r4, r2
+ 1135              	.LBB90:
+ 1136              	.LBB88:
+  67:Galvo/galvo.c **** }
+ 1137              		.loc 1 67 13 view .LVU335
+ 1138 0050 01FB03F3 		mul	r3, r1, r3
+ 1139              	.LBE88:
+ 1140              	.LBE90:
+ 321:Galvo/galvo.c ****     {
+ 1141              		.loc 1 321 8 discriminator 1 view .LVU336
+ 1142 0054 9A42     		cmp	r2, r3
+ 1143 0056 F4D3     		bcc	.L57
+ 326:Galvo/galvo.c ****     {
+ 1144              		.loc 1 326 5 is_stmt 1 view .LVU337
+ 326:Galvo/galvo.c ****     {
+ 1145              		.loc 1 326 10 is_stmt 0 view .LVU338
+ 1146 0058 04A8     		add	r0, sp, #16
+ 1147 005a FFF7FEFF 		bl	Comm_PopPoint
+ 1148              	.LVL79:
+ 326:Galvo/galvo.c ****     {
+ 1149              		.loc 1 326 8 discriminator 1 view .LVU339
+ 1150 005e 0028     		cmp	r0, #0
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 37
+
+
+ 1151 0060 EFD0     		beq	.L57
+ 332:Galvo/galvo.c ****     {
+ 1152              		.loc 1 332 5 is_stmt 1 view .LVU340
+ 332:Galvo/galvo.c ****     {
+ 1153              		.loc 1 332 8 is_stmt 0 view .LVU341
+ 1154 0062 9DF81430 		ldrb	r3, [sp, #20]	@ zero_extendqisi2
+ 1155 0066 DBB1     		cbz	r3, .L61
+ 334:Galvo/galvo.c ****     }
+ 1156              		.loc 1 334 7 is_stmt 1 view .LVU342
+ 1157 0068 FFF7FEFF 		bl	Laser_On
+ 1158              	.LVL80:
+ 1159              	.L62:
+ 341:Galvo/galvo.c ****     galvo_plan_state = GALVO_MOVING;
+ 1160              		.loc 1 341 5 view .LVU343
+ 1161 006c 254B     		ldr	r3, .L76+36
+ 1162 006e 264A     		ldr	r2, .L76+40
+ 1163 0070 B3F90010 		ldrsh	r1, [r3]
+ 1164 0074 BDF91230 		ldrsh	r3, [sp, #18]
+ 1165 0078 B2F90020 		ldrsh	r2, [r2]
+ 1166 007c 2348     		ldr	r0, .L76+44
+ 1167 007e 0093     		str	r3, [sp]
+ 1168 0080 BDF91030 		ldrsh	r3, [sp, #16]
+ 1169 0084 FFF7FEFF 		bl	SCurve_Start
+ 1170              	.LVL81:
+ 342:Galvo/galvo.c ****   }
+ 1171              		.loc 1 342 5 view .LVU344
+ 342:Galvo/galvo.c ****   }
+ 1172              		.loc 1 342 22 is_stmt 0 view .LVU345
+ 1173 0088 0123     		movs	r3, #1
+ 1174 008a 3370     		strb	r3, [r6]
+ 1175 008c CEE7     		b	.L59
+ 1176              	.L75:
+ 342:Galvo/galvo.c ****   }
+ 1177              		.loc 1 342 22 view .LVU346
+ 1178              	.LBE84:
+ 351:Galvo/galvo.c ****   {
+ 1179              		.loc 1 351 3 is_stmt 1 view .LVU347
+ 351:Galvo/galvo.c ****   {
+ 1180              		.loc 1 351 8 is_stmt 0 view .LVU348
+ 1181 008e 1F48     		ldr	r0, .L76+44
+ 1182 0090 04AA     		add	r2, sp, #16
+ 1183 0092 0DF10E01 		add	r1, sp, #14
+ 1184 0096 FFF7FEFF 		bl	SCurve_Next
+ 1185              	.LVL82:
+ 351:Galvo/galvo.c ****   {
+ 1186              		.loc 1 351 6 discriminator 1 view .LVU349
+ 1187 009a 20B9     		cbnz	r0, .L64
+ 353:Galvo/galvo.c ****     return;
+ 1188              		.loc 1 353 5 is_stmt 1 view .LVU350
+ 353:Galvo/galvo.c ****     return;
+ 1189              		.loc 1 353 22 is_stmt 0 view .LVU351
+ 1190 009c 3070     		strb	r0, [r6]
+ 354:Galvo/galvo.c ****   }
+ 1191              		.loc 1 354 5 is_stmt 1 view .LVU352
+ 1192 009e D0E7     		b	.L57
+ 1193              	.L61:
+ 1194              	.LBB91:
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 38
+
+
+ 338:Galvo/galvo.c ****     }
+ 1195              		.loc 1 338 7 view .LVU353
+ 1196 00a0 FFF7FEFF 		bl	Laser_Off
+ 1197              	.LVL83:
+ 1198 00a4 E2E7     		b	.L62
+ 1199              	.L64:
+ 338:Galvo/galvo.c ****     }
+ 1200              		.loc 1 338 7 is_stmt 0 view .LVU354
+ 1201              	.LBE91:
+ 357:Galvo/galvo.c ****   galvo_cur_x = x;
+ 1202              		.loc 1 357 3 is_stmt 1 view .LVU355
+ 1203 00a6 BDF90E90 		ldrsh	r9, [sp, #14]
+ 1204 00aa BDF91080 		ldrsh	r8, [sp, #16]
+ 1205 00ae 4846     		mov	r0, r9
+ 1206 00b0 4146     		mov	r1, r8
+ 1207 00b2 FFF7FEFF 		bl	galvo_build_stage.constprop.0
+ 1208              	.LVL84:
+ 358:Galvo/galvo.c ****   galvo_cur_y = y;
+ 1209              		.loc 1 358 3 view .LVU356
+ 358:Galvo/galvo.c ****   galvo_cur_y = y;
+ 1210              		.loc 1 358 15 is_stmt 0 view .LVU357
+ 1211 00b6 134B     		ldr	r3, .L76+36
+ 362:Galvo/galvo.c ****   {
+ 1212              		.loc 1 362 7 view .LVU358
+ 1213 00b8 1448     		ldr	r0, .L76+44
+ 358:Galvo/galvo.c ****   galvo_cur_y = y;
+ 1214              		.loc 1 358 15 view .LVU359
+ 1215 00ba A3F80090 		strh	r9, [r3]	@ movhi
+ 359:Galvo/galvo.c ****   galvo_last_point_cycle = now;
+ 1216              		.loc 1 359 3 is_stmt 1 view .LVU360
+ 359:Galvo/galvo.c ****   galvo_last_point_cycle = now;
+ 1217              		.loc 1 359 15 is_stmt 0 view .LVU361
+ 1218 00be 124B     		ldr	r3, .L76+40
+ 360:Galvo/galvo.c **** 
+ 1219              		.loc 1 360 26 view .LVU362
+ 1220 00c0 2C60     		str	r4, [r5]
+ 359:Galvo/galvo.c ****   galvo_last_point_cycle = now;
+ 1221              		.loc 1 359 15 view .LVU363
+ 1222 00c2 A3F80080 		strh	r8, [r3]	@ movhi
+ 360:Galvo/galvo.c **** 
+ 1223              		.loc 1 360 3 is_stmt 1 view .LVU364
+ 362:Galvo/galvo.c ****   {
+ 1224              		.loc 1 362 3 view .LVU365
+ 362:Galvo/galvo.c ****   {
+ 1225              		.loc 1 362 7 is_stmt 0 view .LVU366
+ 1226 00c6 FFF7FEFF 		bl	SCurve_Done
+ 1227              	.LVL85:
+ 362:Galvo/galvo.c ****   {
+ 1228              		.loc 1 362 6 discriminator 1 view .LVU367
+ 1229 00ca 18B1     		cbz	r0, .L65
+ 364:Galvo/galvo.c ****     galvo_last_arrive_cycle = now;
+ 1230              		.loc 1 364 5 is_stmt 1 view .LVU368
+ 365:Galvo/galvo.c ****   }
+ 1231              		.loc 1 365 29 is_stmt 0 view .LVU369
+ 1232 00cc 0C4B     		ldr	r3, .L76+32
+ 364:Galvo/galvo.c ****     galvo_last_arrive_cycle = now;
+ 1233              		.loc 1 364 22 view .LVU370
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 39
+
+
+ 1234 00ce 0022     		movs	r2, #0
+ 1235 00d0 3270     		strb	r2, [r6]
+ 365:Galvo/galvo.c ****   }
+ 1236              		.loc 1 365 5 is_stmt 1 view .LVU371
+ 365:Galvo/galvo.c ****   }
+ 1237              		.loc 1 365 29 is_stmt 0 view .LVU372
+ 1238 00d2 1C60     		str	r4, [r3]
+ 1239              	.L65:
+ 368:Galvo/galvo.c ****   galvo_stage_gen++;
+ 1240              		.loc 1 368 3 is_stmt 1 view .LVU373
+ 1241              	.LBB92:
+ 1242              	.LBI92:
  280:Drivers/CMSIS/Include/cmsis_gcc.h **** {
- 1033              		.loc 2 280 27 view .LVU299
- 1034              	.LBB67:
- 1035              		.loc 2 282 3 view .LVU300
- 1036              		.syntax unified
- 1037              	@ 282 "Drivers/CMSIS/Include/cmsis_gcc.h" 1
- 1038 003e BFF35F8F 		dmb 0xF
- 1039              	@ 0 "" 2
- 1040              		.thumb
- 1041              		.syntax unified
- 1042              	.LBE67:
- 1043              	.LBE66:
- 292:Galvo/galvo.c **** }
- 1044              		.loc 1 292 3 view .LVU301
- 292:Galvo/galvo.c **** }
- 1045              		.loc 1 292 18 is_stmt 0 view .LVU302
- 1046 0042 2368     		ldr	r3, [r4]
- 1047 0044 0133     		adds	r3, r3, #1
- 1048 0046 2360     		str	r3, [r4]
- 1049              		.loc 1 293 1 view .LVU303
- 1050 0048 02B0     		add	sp, sp, #8
- 1051              	.LCFI11:
- 1052              		.cfi_def_cfa_offset 8
- 1053              		@ sp needed
- 1054 004a 10BD     		pop	{r4, pc}
- 1055              	.L68:
- 1056              		.align	2
- 1057              	.L67:
- 1058 004c 00000000 		.word	galvo_a_gen
- 1059 0050 00000000 		.word	galvo_stage_gen
- 1060 0054 00000000 		.word	galvo_drop
- 1061 0058 00000000 		.word	galvo_b_gen
- 1062              		.cfi_endproc
- 1063              	.LFE143:
- 1065              		.section	.text.Galvo_SetControlCode,"ax",%progbits
- 1066              		.align	1
- 1067              		.p2align 2,,3
- 1068              		.global	Galvo_SetControlCode
- 1069              		.syntax unified
- 1070              		.thumb
- 1071              		.thumb_func
- 1073              	Galvo_SetControlCode:
- 1074              	.LVL77:
- 1075              	.LFB144:
- 294:Galvo/galvo.c **** 
- 295:Galvo/galvo.c **** void Galvo_SetControlCode(uint8_t code)
- 296:Galvo/galvo.c **** {
- 1076              		.loc 1 296 1 is_stmt 1 view -0
- 1077              		.cfi_startproc
- 1078              		@ args = 0, pretend = 0, frame = 0
- 1079              		@ frame_needed = 0, uses_anonymous_args = 0
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 34
+ 1243              		.loc 2 280 27 view .LVU374
+ 1244              	.LBB93:
+ 1245              		.loc 2 282 3 view .LVU375
+ 1246              		.syntax unified
+ 1247              	@ 282 "Drivers/CMSIS/Include/cmsis_gcc.h" 1
+ 1248 00d4 BFF35F8F 		dmb 0xF
+ 1249              	@ 0 "" 2
+ 1250              		.thumb
+ 1251              		.syntax unified
+ 1252              	.LBE93:
+ 1253              	.LBE92:
+ 369:Galvo/galvo.c **** }
+ 1254              		.loc 1 369 3 view .LVU376
+ 369:Galvo/galvo.c **** }
+ 1255              		.loc 1 369 18 is_stmt 0 view .LVU377
+ 1256 00d8 3B68     		ldr	r3, [r7]
+ 1257 00da 0133     		adds	r3, r3, #1
+ 1258 00dc 3B60     		str	r3, [r7]
+ 1259 00de B0E7     		b	.L57
+ 1260              	.L77:
+ 1261              		.align	2
+ 1262              	.L76:
+ 1263 00e0 00000000 		.word	SystemCoreClock
+ 1264 00e4 001000E0 		.word	-536866816
+ 1265 00e8 83DE1B43 		.word	1125899907
+ 1266 00ec 00000000 		.word	galvo_last_point_cycle
+ 1267 00f0 00000000 		.word	galvo_plan_state
+ 1268 00f4 00000000 		.word	galvo_a_gen
+ 1269 00f8 00000000 		.word	galvo_stage_gen
+ 1270 00fc 00000000 		.word	galvo_b_gen
+ 1271 0100 00000000 		.word	galvo_last_arrive_cycle
+ 1272 0104 00000000 		.word	galvo_cur_x
+ 1273 0108 00000000 		.word	galvo_cur_y
+ 1274 010c 00000000 		.word	galvo_scurve
+ 1275              		.cfi_endproc
+ 1276              	.LFE144:
+ 1278              		.section	.text.Galvo_SetControlCode,"ax",%progbits
+ 1279              		.align	1
+ 1280              		.p2align 2,,3
+ 1281              		.global	Galvo_SetControlCode
+ 1282              		.syntax unified
+ 1283              		.thumb
+ 1284              		.thumb_func
+ 1286              	Galvo_SetControlCode:
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 40
 
 
- 1080              		@ link register save eliminated.
- 297:Galvo/galvo.c ****   galvo_ctrl = (uint8_t)(code & 0x7U);
- 1081              		.loc 1 297 3 view .LVU305
- 1082              		.loc 1 297 14 is_stmt 0 view .LVU306
- 1083 0000 024B     		ldr	r3, .L70
- 1084              		.loc 1 297 16 view .LVU307
- 1085 0002 00F00700 		and	r0, r0, #7
- 1086              	.LVL78:
- 1087              		.loc 1 297 14 view .LVU308
- 1088 0006 1870     		strb	r0, [r3]
- 298:Galvo/galvo.c **** }
- 1089              		.loc 1 298 1 view .LVU309
- 1090 0008 7047     		bx	lr
- 1091              	.L71:
- 1092 000a 00BF     		.align	2
- 1093              	.L70:
- 1094 000c 00000000 		.word	galvo_ctrl
- 1095              		.cfi_endproc
- 1096              	.LFE144:
- 1098              		.section	.text.Galvo_GetDropCount,"ax",%progbits
- 1099              		.align	1
- 1100              		.p2align 2,,3
- 1101              		.global	Galvo_GetDropCount
- 1102              		.syntax unified
- 1103              		.thumb
- 1104              		.thumb_func
- 1106              	Galvo_GetDropCount:
- 1107              	.LFB145:
- 299:Galvo/galvo.c **** 
- 300:Galvo/galvo.c **** uint32_t Galvo_GetDropCount(void)
- 301:Galvo/galvo.c **** {
- 1108              		.loc 1 301 1 is_stmt 1 view -0
- 1109              		.cfi_startproc
- 1110              		@ args = 0, pretend = 0, frame = 0
- 1111              		@ frame_needed = 0, uses_anonymous_args = 0
- 1112              		@ link register save eliminated.
- 302:Galvo/galvo.c ****   return galvo_drop;
- 1113              		.loc 1 302 3 view .LVU311
- 1114              		.loc 1 302 10 is_stmt 0 view .LVU312
- 1115 0000 014B     		ldr	r3, .L73
- 1116 0002 1868     		ldr	r0, [r3]
- 303:Galvo/galvo.c **** }
- 1117              		.loc 1 303 1 view .LVU313
- 1118 0004 7047     		bx	lr
- 1119              	.L74:
- 1120 0006 00BF     		.align	2
- 1121              	.L73:
- 1122 0008 00000000 		.word	galvo_drop
- 1123              		.cfi_endproc
- 1124              	.LFE145:
- 1126              		.section	.text.Galvo_GetDmaErrorCount,"ax",%progbits
- 1127              		.align	1
- 1128              		.p2align 2,,3
- 1129              		.global	Galvo_GetDmaErrorCount
- 1130              		.syntax unified
- 1131              		.thumb
- 1132              		.thumb_func
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 35
+ 1287              	.LVL86:
+ 1288              	.LFB145:
+ 371:Galvo/galvo.c **** 
+ 372:Galvo/galvo.c **** void Galvo_SetControlCode(uint8_t code)
+ 373:Galvo/galvo.c **** {
+ 1289              		.loc 1 373 1 is_stmt 1 view -0
+ 1290              		.cfi_startproc
+ 1291              		@ args = 0, pretend = 0, frame = 0
+ 1292              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1293              		@ link register save eliminated.
+ 374:Galvo/galvo.c ****   galvo_ctrl = (uint8_t)(code & 0x7U);
+ 1294              		.loc 1 374 3 view .LVU379
+ 1295              		.loc 1 374 14 is_stmt 0 view .LVU380
+ 1296 0000 024B     		ldr	r3, .L79
+ 1297              		.loc 1 374 16 view .LVU381
+ 1298 0002 00F00700 		and	r0, r0, #7
+ 1299              	.LVL87:
+ 1300              		.loc 1 374 14 view .LVU382
+ 1301 0006 1870     		strb	r0, [r3]
+ 375:Galvo/galvo.c **** }
+ 1302              		.loc 1 375 1 view .LVU383
+ 1303 0008 7047     		bx	lr
+ 1304              	.L80:
+ 1305 000a 00BF     		.align	2
+ 1306              	.L79:
+ 1307 000c 00000000 		.word	galvo_ctrl
+ 1308              		.cfi_endproc
+ 1309              	.LFE145:
+ 1311              		.section	.text.Galvo_GetDmaErrorCount,"ax",%progbits
+ 1312              		.align	1
+ 1313              		.p2align 2,,3
+ 1314              		.global	Galvo_GetDmaErrorCount
+ 1315              		.syntax unified
+ 1316              		.thumb
+ 1317              		.thumb_func
+ 1319              	Galvo_GetDmaErrorCount:
+ 1320              	.LFB146:
+ 376:Galvo/galvo.c **** 
+ 377:Galvo/galvo.c **** uint32_t Galvo_GetDmaErrorCount(void)
+ 378:Galvo/galvo.c **** {
+ 1321              		.loc 1 378 1 is_stmt 1 view -0
+ 1322              		.cfi_startproc
+ 1323              		@ args = 0, pretend = 0, frame = 0
+ 1324              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1325              		@ link register save eliminated.
+ 379:Galvo/galvo.c ****   return galvo_dma_err;
+ 1326              		.loc 1 379 3 view .LVU385
+ 1327              		.loc 1 379 10 is_stmt 0 view .LVU386
+ 1328 0000 014B     		ldr	r3, .L82
+ 1329 0002 1868     		ldr	r0, [r3]
+ 380:Galvo/galvo.c **** }
+ 1330              		.loc 1 380 1 view .LVU387
+ 1331 0004 7047     		bx	lr
+ 1332              	.L83:
+ 1333 0006 00BF     		.align	2
+ 1334              	.L82:
+ 1335 0008 00000000 		.word	galvo_dma_err
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 41
 
 
- 1134              	Galvo_GetDmaErrorCount:
- 1135              	.LFB146:
- 304:Galvo/galvo.c **** 
- 305:Galvo/galvo.c **** uint32_t Galvo_GetDmaErrorCount(void)
- 306:Galvo/galvo.c **** {
- 1136              		.loc 1 306 1 is_stmt 1 view -0
- 1137              		.cfi_startproc
- 1138              		@ args = 0, pretend = 0, frame = 0
- 1139              		@ frame_needed = 0, uses_anonymous_args = 0
- 1140              		@ link register save eliminated.
- 307:Galvo/galvo.c ****   return galvo_dma_err;
- 1141              		.loc 1 307 3 view .LVU315
- 1142              		.loc 1 307 10 is_stmt 0 view .LVU316
- 1143 0000 014B     		ldr	r3, .L76
- 1144 0002 1868     		ldr	r0, [r3]
- 308:Galvo/galvo.c **** }
- 1145              		.loc 1 308 1 view .LVU317
- 1146 0004 7047     		bx	lr
- 1147              	.L77:
- 1148 0006 00BF     		.align	2
- 1149              	.L76:
- 1150 0008 00000000 		.word	galvo_dma_err
- 1151              		.cfi_endproc
- 1152              	.LFE146:
- 1154              		.global	g_rx_to_dma_cycles
- 1155              		.section	.bss.g_rx_to_dma_cycles,"aw",%nobits
- 1156              		.align	2
- 1159              	g_rx_to_dma_cycles:
- 1160 0000 00000000 		.space	4
- 1161              		.global	g_dma_copy_cycles
- 1162              		.section	.bss.g_dma_copy_cycles,"aw",%nobits
- 1163              		.align	2
- 1166              	g_dma_copy_cycles:
- 1167 0000 00000000 		.space	4
- 1168              		.section	.bss.galvo_dma_err,"aw",%nobits
- 1169              		.align	2
- 1172              	galvo_dma_err:
- 1173 0000 00000000 		.space	4
- 1174              		.section	.bss.galvo_drop,"aw",%nobits
- 1175              		.align	2
- 1178              	galvo_drop:
- 1179 0000 00000000 		.space	4
- 1180              		.section	.data.galvo_ctrl,"aw"
- 1183              	galvo_ctrl:
- 1184 0000 01       		.byte	1
- 1185              		.section	.bss.galvo_b_gen,"aw",%nobits
- 1186              		.align	2
- 1189              	galvo_b_gen:
- 1190 0000 00000000 		.space	4
- 1191              		.section	.bss.galvo_a_gen,"aw",%nobits
- 1192              		.align	2
- 1195              	galvo_a_gen:
- 1196 0000 00000000 		.space	4
- 1197              		.section	.bss.galvo_stage_gen,"aw",%nobits
- 1198              		.align	2
- 1201              	galvo_stage_gen:
- 1202 0000 00000000 		.space	4
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 36
+ 1336              		.cfi_endproc
+ 1337              	.LFE146:
+ 1339              		.global	g_rx_to_dma_cycles
+ 1340              		.section	.bss.g_rx_to_dma_cycles,"aw",%nobits
+ 1341              		.align	2
+ 1344              	g_rx_to_dma_cycles:
+ 1345 0000 00000000 		.space	4
+ 1346              		.global	g_dma_copy_cycles
+ 1347              		.section	.bss.g_dma_copy_cycles,"aw",%nobits
+ 1348              		.align	2
+ 1351              	g_dma_copy_cycles:
+ 1352 0000 00000000 		.space	4
+ 1353              		.section	.bss.galvo_last_arrive_cycle,"aw",%nobits
+ 1354              		.align	2
+ 1357              	galvo_last_arrive_cycle:
+ 1358 0000 00000000 		.space	4
+ 1359              		.section	.bss.galvo_last_point_cycle,"aw",%nobits
+ 1360              		.align	2
+ 1363              	galvo_last_point_cycle:
+ 1364 0000 00000000 		.space	4
+ 1365              		.section	.bss.galvo_cur_y,"aw",%nobits
+ 1366              		.align	1
+ 1369              	galvo_cur_y:
+ 1370 0000 0000     		.space	2
+ 1371              		.section	.bss.galvo_cur_x,"aw",%nobits
+ 1372              		.align	1
+ 1375              	galvo_cur_x:
+ 1376 0000 0000     		.space	2
+ 1377              		.section	.bss.galvo_plan_state,"aw",%nobits
+ 1380              	galvo_plan_state:
+ 1381 0000 00       		.space	1
+ 1382              		.section	.bss.galvo_scurve,"aw",%nobits
+ 1383              		.align	2
+ 1386              	galvo_scurve:
+ 1387 0000 00000000 		.space	20
+ 1387      00000000 
+ 1387      00000000 
+ 1387      00000000 
+ 1387      00000000 
+ 1388              		.section	.bss.galvo_dma_err,"aw",%nobits
+ 1389              		.align	2
+ 1392              	galvo_dma_err:
+ 1393 0000 00000000 		.space	4
+ 1394              		.section	.data.galvo_ctrl,"aw"
+ 1397              	galvo_ctrl:
+ 1398 0000 01       		.byte	1
+ 1399              		.section	.bss.galvo_b_gen,"aw",%nobits
+ 1400              		.align	2
+ 1403              	galvo_b_gen:
+ 1404 0000 00000000 		.space	4
+ 1405              		.section	.bss.galvo_a_gen,"aw",%nobits
+ 1406              		.align	2
+ 1409              	galvo_a_gen:
+ 1410 0000 00000000 		.space	4
+ 1411              		.section	.bss.galvo_stage_gen,"aw",%nobits
+ 1412              		.align	2
+ 1415              	galvo_stage_gen:
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 42
 
 
- 1203              		.section	.bss.galvo_stage,"aw",%nobits
- 1204              		.align	2
- 1207              	galvo_stage:
- 1208 0000 00000000 		.space	80
- 1208      00000000 
- 1208      00000000 
- 1208      00000000 
- 1208      00000000 
- 1209              		.section	.bss.galvo_frame,"aw",%nobits
- 1210              		.align	2
- 1213              	galvo_frame:
- 1214 0000 00000000 		.space	160
- 1214      00000000 
- 1214      00000000 
- 1214      00000000 
- 1214      00000000 
- 1215              		.section	.rodata.galvo_lut_beta,"a"
- 1216              		.align	2
- 1219              	galvo_lut_beta:
- 1220 0000 00000000 		.space	32768
- 1220      00000000 
- 1220      00000000 
- 1220      00000000 
- 1220      00000000 
- 1221              		.section	.rodata.galvo_lut_alpha,"a"
- 1222              		.align	2
- 1225              	galvo_lut_alpha:
- 1226 0000 00000000 		.space	32768
- 1226      00000000 
- 1226      00000000 
- 1226      00000000 
- 1226      00000000 
- 1227              		.text
- 1228              	.Letext0:
- 1229              		.file 3 "D:\\vscode\\stm32cubecltv122\\stm32cubeclt_1.22.0-Win-x86_64.exe\\anzhuang\\STM32CubeCLT_
- 1230              		.file 4 "D:\\vscode\\stm32cubecltv122\\stm32cubeclt_1.22.0-Win-x86_64.exe\\anzhuang\\STM32CubeCLT_
- 1231              		.file 5 "Galvo/galvo.h"
- 1232              		.file 6 "Galvo/galvo_lut.h"
- 1233              		.file 7 "Galvo/comm.h"
- 1234              		.file 8 "Drivers/CMSIS/Include/core_cm4.h"
- 1235              		.file 9 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h"
- 1236              		.file 10 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
- 1237              		.file 11 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
- 1238              		.file 12 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h"
- 1239              		.file 13 "Core/Inc/tim.h"
- 1240              		.file 14 "D:\\vscode\\stm32cubecltv122\\stm32cubeclt_1.22.0-Win-x86_64.exe\\anzhuang\\STM32CubeCLT
- 1241              		.file 15 "Core/Inc/main.h"
- 1242              		.file 16 "<built-in>"
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 37
+ 1416 0000 00000000 		.space	4
+ 1417              		.section	.bss.galvo_stage,"aw",%nobits
+ 1418              		.align	2
+ 1421              	galvo_stage:
+ 1422 0000 00000000 		.space	80
+ 1422      00000000 
+ 1422      00000000 
+ 1422      00000000 
+ 1422      00000000 
+ 1423              		.section	.bss.galvo_frame,"aw",%nobits
+ 1424              		.align	2
+ 1427              	galvo_frame:
+ 1428 0000 00000000 		.space	160
+ 1428      00000000 
+ 1428      00000000 
+ 1428      00000000 
+ 1428      00000000 
+ 1429              		.section	.rodata.galvo_lut_beta,"a"
+ 1430              		.align	2
+ 1433              	galvo_lut_beta:
+ 1434 0000 00000000 		.space	32768
+ 1434      00000000 
+ 1434      00000000 
+ 1434      00000000 
+ 1434      00000000 
+ 1435              		.section	.rodata.galvo_lut_alpha,"a"
+ 1436              		.align	2
+ 1439              	galvo_lut_alpha:
+ 1440 0000 00000000 		.space	32768
+ 1440      00000000 
+ 1440      00000000 
+ 1440      00000000 
+ 1440      00000000 
+ 1441              		.text
+ 1442              	.Letext0:
+ 1443              		.file 3 "D:\\vscode\\stm32cubecltv122\\stm32cubeclt_1.22.0-Win-x86_64.exe\\anzhuang\\STM32CubeCLT_
+ 1444              		.file 4 "D:\\vscode\\stm32cubecltv122\\stm32cubeclt_1.22.0-Win-x86_64.exe\\anzhuang\\STM32CubeCLT_
+ 1445              		.file 5 "Galvo/galvo.h"
+ 1446              		.file 6 "Galvo/galvo_lut.h"
+ 1447              		.file 7 "Galvo/comm.h"
+ 1448              		.file 8 "lib/scurve/scurve.h"
+ 1449              		.file 9 "Drivers/CMSIS/Include/core_cm4.h"
+ 1450              		.file 10 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/system_stm32f4xx.h"
+ 1451              		.file 11 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h"
+ 1452              		.file 12 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
+ 1453              		.file 13 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_dma.h"
+ 1454              		.file 14 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h"
+ 1455              		.file 15 "Core/Inc/tim.h"
+ 1456              		.file 16 "D:\\vscode\\stm32cubecltv122\\stm32cubeclt_1.22.0-Win-x86_64.exe\\anzhuang\\STM32CubeCLT
+ 1457              		.file 17 "Laser/laser.h"
+ 1458              		.file 18 "Core/Inc/main.h"
+ 1459              		.file 19 "<built-in>"
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 43
 
 
 DEFINED SYMBOLS
                             *ABS*:00000000 galvo.c
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:21     .text.galvo_dma_error_cb:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:27     .text.galvo_dma_error_cb:00000000 galvo_dma_error_cb
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:47     .text.galvo_dma_error_cb:0000000c $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1172   .bss.galvo_dma_err:00000000 galvo_dma_err
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:52     .text.galvo_dma_half_cb:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:58     .text.galvo_dma_half_cb:00000000 galvo_dma_half_cb
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:168    .text.galvo_dma_half_cb:00000044 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1195   .bss.galvo_a_gen:00000000 galvo_a_gen
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1201   .bss.galvo_stage_gen:00000000 galvo_stage_gen
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1207   .bss.galvo_stage:00000000 galvo_stage
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1213   .bss.galvo_frame:00000000 galvo_frame
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1166   .bss.g_dma_copy_cycles:00000000 g_dma_copy_cycles
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1159   .bss.g_rx_to_dma_cycles:00000000 g_rx_to_dma_cycles
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:181    .text.galvo_dma_cplt_cb:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:187    .text.galvo_dma_cplt_cb:00000000 galvo_dma_cplt_cb
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:296    .text.galvo_dma_cplt_cb:00000044 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1189   .bss.galvo_b_gen:00000000 galvo_b_gen
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:309    .text.galvo_axis_cmd.constprop.0:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:315    .text.galvo_axis_cmd.constprop.0:00000000 galvo_axis_cmd.constprop.0
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:531    .text.galvo_axis_cmd.constprop.0:00000104 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:539    .text.galvo_build_stage.constprop.0:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:545    .text.galvo_build_stage.constprop.0:00000000 galvo_build_stage.constprop.0
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:735    .text.galvo_build_stage.constprop.0:000000b0 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1225   .rodata.galvo_lut_alpha:00000000 galvo_lut_alpha
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1219   .rodata.galvo_lut_beta:00000000 galvo_lut_beta
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1183   .data.galvo_ctrl:00000000 galvo_ctrl
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:746    .text.Galvo_DwtInit:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:753    .text.Galvo_DwtInit:00000000 Galvo_DwtInit
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:786    .text.Galvo_DwtInit:00000020 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:792    .text.Galvo_Init:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:799    .text.Galvo_Init:00000000 Galvo_Init
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:943    .text.Galvo_Init:00000098 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:959    .text.Galvo_Task:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:966    .text.Galvo_Task:00000000 Galvo_Task
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1058   .text.Galvo_Task:0000004c $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1178   .bss.galvo_drop:00000000 galvo_drop
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1066   .text.Galvo_SetControlCode:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1073   .text.Galvo_SetControlCode:00000000 Galvo_SetControlCode
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1094   .text.Galvo_SetControlCode:0000000c $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1099   .text.Galvo_GetDropCount:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1106   .text.Galvo_GetDropCount:00000000 Galvo_GetDropCount
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1122   .text.Galvo_GetDropCount:00000008 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1127   .text.Galvo_GetDmaErrorCount:00000000 $t
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1134   .text.Galvo_GetDmaErrorCount:00000000 Galvo_GetDmaErrorCount
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1150   .text.Galvo_GetDmaErrorCount:00000008 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1156   .bss.g_rx_to_dma_cycles:00000000 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1163   .bss.g_dma_copy_cycles:00000000 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1169   .bss.galvo_dma_err:00000000 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1175   .bss.galvo_drop:00000000 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1186   .bss.galvo_b_gen:00000000 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1192   .bss.galvo_a_gen:00000000 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1198   .bss.galvo_stage_gen:00000000 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1204   .bss.galvo_stage:00000000 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1210   .bss.galvo_frame:00000000 $d
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1216   .rodata.galvo_lut_beta:00000000 $d
-ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s 			page 38
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:21     .text.galvo_dma_error_cb:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:27     .text.galvo_dma_error_cb:00000000 galvo_dma_error_cb
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:47     .text.galvo_dma_error_cb:0000000c $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1392   .bss.galvo_dma_err:00000000 galvo_dma_err
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:52     .text.galvo_dma_half_cb:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:58     .text.galvo_dma_half_cb:00000000 galvo_dma_half_cb
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:168    .text.galvo_dma_half_cb:00000044 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1409   .bss.galvo_a_gen:00000000 galvo_a_gen
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1415   .bss.galvo_stage_gen:00000000 galvo_stage_gen
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1421   .bss.galvo_stage:00000000 galvo_stage
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1427   .bss.galvo_frame:00000000 galvo_frame
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1351   .bss.g_dma_copy_cycles:00000000 g_dma_copy_cycles
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1344   .bss.g_rx_to_dma_cycles:00000000 g_rx_to_dma_cycles
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:181    .text.galvo_dma_cplt_cb:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:187    .text.galvo_dma_cplt_cb:00000000 galvo_dma_cplt_cb
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:296    .text.galvo_dma_cplt_cb:00000044 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1403   .bss.galvo_b_gen:00000000 galvo_b_gen
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:309    .text.galvo_axis_cmd.constprop.0:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:315    .text.galvo_axis_cmd.constprop.0:00000000 galvo_axis_cmd.constprop.0
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:531    .text.galvo_axis_cmd.constprop.0:00000104 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:539    .text.galvo_build_stage.constprop.0:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:545    .text.galvo_build_stage.constprop.0:00000000 galvo_build_stage.constprop.0
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:735    .text.galvo_build_stage.constprop.0:000000b0 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1439   .rodata.galvo_lut_alpha:00000000 galvo_lut_alpha
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1433   .rodata.galvo_lut_beta:00000000 galvo_lut_beta
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1397   .data.galvo_ctrl:00000000 galvo_ctrl
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:746    .text.Galvo_DwtInit:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:753    .text.Galvo_DwtInit:00000000 Galvo_DwtInit
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:786    .text.Galvo_DwtInit:00000020 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:792    .text.Galvo_Init:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:799    .text.Galvo_Init:00000000 Galvo_Init
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:974    .text.Galvo_Init:000000b0 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1380   .bss.galvo_plan_state:00000000 galvo_plan_state
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1375   .bss.galvo_cur_x:00000000 galvo_cur_x
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1363   .bss.galvo_last_point_cycle:00000000 galvo_last_point_cycle
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1357   .bss.galvo_last_arrive_cycle:00000000 galvo_last_arrive_cycle
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1369   .bss.galvo_cur_y:00000000 galvo_cur_y
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:995    .text.Galvo_Task:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1002   .text.Galvo_Task:00000000 Galvo_Task
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1263   .text.Galvo_Task:000000e0 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1386   .bss.galvo_scurve:00000000 galvo_scurve
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1279   .text.Galvo_SetControlCode:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1286   .text.Galvo_SetControlCode:00000000 Galvo_SetControlCode
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1307   .text.Galvo_SetControlCode:0000000c $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1312   .text.Galvo_GetDmaErrorCount:00000000 $t
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1319   .text.Galvo_GetDmaErrorCount:00000000 Galvo_GetDmaErrorCount
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1335   .text.Galvo_GetDmaErrorCount:00000008 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1341   .bss.g_rx_to_dma_cycles:00000000 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1348   .bss.g_dma_copy_cycles:00000000 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1354   .bss.galvo_last_arrive_cycle:00000000 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1360   .bss.galvo_last_point_cycle:00000000 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1366   .bss.galvo_cur_y:00000000 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1372   .bss.galvo_cur_x:00000000 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1381   .bss.galvo_plan_state:00000000 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1383   .bss.galvo_scurve:00000000 $d
+ARM GAS  C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s 			page 44
 
 
-C:\Users\Lenovo\AppData\Local\Temp\ccEfKiKn.s:1222   .rodata.galvo_lut_alpha:00000000 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1389   .bss.galvo_dma_err:00000000 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1400   .bss.galvo_b_gen:00000000 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1406   .bss.galvo_a_gen:00000000 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1412   .bss.galvo_stage_gen:00000000 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1418   .bss.galvo_stage:00000000 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1424   .bss.galvo_frame:00000000 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1430   .rodata.galvo_lut_beta:00000000 $d
+C:\Users\Lenovo\AppData\Local\Temp\cch7O12j.s:1436   .rodata.galvo_lut_alpha:00000000 $d
 
 UNDEFINED SYMBOLS
 memcpy
 g_comm_last_rx_cycle
 lroundf
+Laser_Off
 HAL_DMA_RegisterCallback
 HAL_DMA_Start_IT
 HAL_TIM_PWM_Start
@@ -2226,3 +2598,8 @@ Error_Handler
 hdma_tim1_up
 htim1
 Comm_PopPoint
+Laser_On
+SCurve_Start
+SCurve_Next
+SCurve_Done
+SystemCoreClock
